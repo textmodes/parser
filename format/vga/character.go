@@ -2,6 +2,8 @@ package vga
 
 import "image/color"
 
+// BlankCharacter is a space with black background and white foreground and no
+// attributes set.
 const BlankCharacter = Character(0x000000aaaaaa0020)
 
 const (
@@ -106,6 +108,7 @@ func (char *Character) SetCodePoint(v uint8) {
 	*char = (*char & 0xff00) | Character(v)
 }
 
+// TextBuffer is a slice of Character.
 type TextBuffer []Character
 
 func newCharacters(size uint) TextBuffer {

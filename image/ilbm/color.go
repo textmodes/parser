@@ -6,7 +6,7 @@ import (
 	"image/color"
 	"io"
 
-	"github.com/textmodes/parser/image/iff"
+	"github.com/textmodes/parser/format/iff"
 )
 
 const (
@@ -32,11 +32,17 @@ func (decoder colorMapDecoder) Decode(context *iff.Decoder, r *io.SectionReader,
 	return chunk, nil
 }
 
+// ColorMap chunk.
 type ColorMap []uint8
 
+// Type of chunk.
 func (chunk ColorMap) Type() string { return colorMapType }
-func (chunk ColorMap) Len() int     { return len(chunk) }
 
+// Len is the length of the chunk in bytes.
+func (chunk ColorMap) Len() int { return len(chunk) }
+
+// Palette of the color map, it is assumed the color map consists of 3-byte
+// RGB triplets.
 func (chunk ColorMap) Palette() color.Palette {
 	var palette color.Palette
 	for i, l := 0, len(chunk); i < l; i += 3 {
@@ -65,6 +71,7 @@ func (decoder colorRangeDecoder) Decode(context *iff.Decoder, r *io.SectionReade
 	return chunk, nil
 }
 
+// ColorRange chunk.
 type ColorRange struct {
 	Padding   int16
 	Rate      int16
@@ -72,5 +79,8 @@ type ColorRange struct {
 	Low, High uint8
 }
 
+// Type of chunk.
 func (chunk ColorRange) Type() string { return colorRangeType }
-func (chunk ColorRange) Len() int     { return colorRangeSize }
+
+// Len is the length of the chunk in bytes.
+func (chunk ColorRange) Len() int { return colorRangeSize }

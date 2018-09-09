@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/textmodes/parser/image/iff"
+	"github.com/textmodes/parser/format/iff"
 )
 
 const (
@@ -26,10 +26,14 @@ func (decoder bodyDecoder) Decode(context *iff.Decoder, r *io.SectionReader, kin
 	return body, nil
 }
 
+// Body chunk.
 type Body struct {
 	Data []byte
 	size int64
 }
 
+// Type of chunk.
 func (body Body) Type() string { return bodyType }
-func (body Body) Len() int     { return int(body.size) }
+
+// Len is the length of the chunk in bytes.
+func (body Body) Len() int { return int(body.size) }

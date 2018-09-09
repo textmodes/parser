@@ -14,6 +14,7 @@ type Decoder struct {
 	*vga.Text
 }
 
+// NewDecoder returns a decoder with a 80x25 VGA text buffer.
 func NewDecoder() *Decoder {
 	return &Decoder{
 		Text: vga.NewText(80, 25),

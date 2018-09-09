@@ -2,9 +2,10 @@ package vga
 
 import "image/color"
 
-// RGB is a 24-bit RGB triplet
+// RGB is a 24-bit RGB triplet.
 type RGB uint32
 
+// RGBA returns the 16-bit RGBA values for the color.
 func (rgb RGB) RGBA() (r, g, b, a uint32) {
 	r = uint32(rgb&0xff0000) >> 16
 	r |= r << 8
@@ -42,7 +43,7 @@ var (
 	Grey        = White
 )
 
-// Pallete is the standard 256-color VGA palette
+// Pallete is the standard 256-color VGA palette.
 var Palette = color.Palette{
 	// CGA or Color Graphics Adapter palette
 	Black,

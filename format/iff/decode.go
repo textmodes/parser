@@ -2,7 +2,6 @@ package iff
 
 import (
 	"io"
-	"log"
 )
 
 // ReadAtSeeker encapsulates the same functionality as io.SectionReader.
@@ -13,11 +12,13 @@ type ReadAtSeeker interface {
 	io.Seeker
 }
 
+// Decoder for Interchange File Format chunks.
 type Decoder struct {
 	builtin map[string]ChunkDecoder
 	custom  map[string]ChunkDecoder
 }
 
+// NewDecoder with optional custom chunk decoders.
 func NewDecoder(custom map[string]ChunkDecoder) *Decoder {
 	if custom == nil {
 		custom = make(map[string]ChunkDecoder)
@@ -30,6 +31,8 @@ func NewDecoder(custom map[string]ChunkDecoder) *Decoder {
 	}
 }
 
+// Decode all chunks found in r. Returned should be the FORM chunk with all
+// its child chunks contained.
 func (decoder *Decoder) Decode(r ReadAtSeeker) (Chunk, error) {
 	kind, err := readString(r, 4)
 	if err != nil {
@@ -51,7 +54,7 @@ func (decoder *Decoder) Decode(r ReadAtSeeker) (Chunk, error) {
 		dec, ok = decoder.builtin[kind]
 	}
 	if !ok {
-		log.Printf("ilbm: unknown type %q", kind)
+		//log.Printf("ilbm: unknown type %q", kind)
 		dec = unknownChunkDecoder{}
 	}
 

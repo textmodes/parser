@@ -3,14 +3,13 @@ package ilbm
 import (
 	"errors"
 	"fmt"
-	"log"
 )
 
 func decompress(src []byte, header *BitmapHeader) (dst []byte, err error) {
 	switch header.Compression {
 	case 0:
 		// No compression
-		log.Printf("ilbm: decompress none %d bytes", len(src))
+		//log.Printf("ilbm: decompress none %d bytes", len(src))
 		return src, nil
 
 	case 1:
@@ -52,6 +51,6 @@ func decompressByteRun(src []byte, header *BitmapHeader) (dst []byte, err error)
 		} /* 128 is a NOP */
 	}
 
-	log.Printf("ilbm: decompress RLE %d to %d bytes", len(src), len(dst))
+	//log.Printf("ilbm: decompress RLE %d to %d bytes", len(src), len(dst))
 	return
 }

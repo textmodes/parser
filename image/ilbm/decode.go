@@ -7,9 +7,8 @@ import (
 	"image"
 	"image/color"
 	"io"
-	"log"
 
-	"github.com/textmodes/parser/image/iff"
+	"github.com/textmodes/parser/format/iff"
 )
 
 var custom = map[string]iff.ChunkDecoder{
@@ -24,6 +23,7 @@ const (
 	idPBM  = "PBM "
 )
 
+// Decode an IFF encoded ILBM image.
 func Decode(r iff.ReadAtSeeker) (image.Image, error) {
 	var (
 		d      = iff.NewDecoder(custom)
@@ -67,22 +67,24 @@ func decodeImage(form *iff.Form) (image.Image, error) {
 		err     error
 	)
 
-	if id == idILBM {
-		log.Printf("ilbm: dimensions %dx%d, %d planes", header.Width, header.Height, header.Planes)
-	} else {
-		log.Printf("ilbm: dimensions %dx%d", header.Width, header.Height)
-	}
+	/*
+			if id == idILBM {
+				log.Printf("ilbm: dimensions %dx%d, %d planes", header.Width, header.Height, header.Planes)
+			} else {
+				log.Printf("ilbm: dimensions %dx%d", header.Width, header.Height)
+			}
 
-	if id == idILBM || id == idPBM {
-		switch header.Compression {
-		case 0:
-			log.Println("ilbm: no compression")
-		case 1:
-			log.Println("ilbm: byterun1 compression")
-		default:
-			log.Println("ilbm: unknown compression")
+		if id == idILBM || id == idPBM {
+			switch header.Compression {
+			case 0:
+				log.Println("ilbm: no compression")
+			case 1:
+				log.Println("ilbm: byterun1 compression")
+			default:
+				log.Println("ilbm: unknown compression")
+			}
 		}
-	}
+	*/
 
 	if err = decodeBody(im, id, header, body, palette); err != nil {
 		return nil, err

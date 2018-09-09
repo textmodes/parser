@@ -46,18 +46,25 @@ func (decoder formDecoder) Decode(context *Decoder, r *io.SectionReader, kind st
 	return chunk, nil
 }
 
+// Form chunk is the root chunk.
 type Form struct {
-	kind   string
-	size   int64
+	// Chunks are the contained child chunks.
 	Chunks []Chunk
+
+	kind string
+	size int64
 }
 
+// Type of chunk.
 func (form Form) Type() string { return form.kind }
-func (form Form) Len() int     { return int(form.size) }
 
-func (form Form) Chunk(kind string) Chunk {
+// Len is the length of the chunk in bytes.
+func (form Form) Len() int { return int(form.size) }
+
+// Chunk returns the first child chunk with matching type.
+func (form Form) Chunk(typ string) Chunk {
 	for _, chunk := range form.Chunks {
-		if chunk.Type() == kind {
+		if chunk.Type() == typ {
 			return chunk
 		}
 	}

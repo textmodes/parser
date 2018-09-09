@@ -7,12 +7,15 @@ import (
 	"math"
 )
 
+// Chunk is an IFF chunk.
 type Chunk interface {
 	Type() string
 	Len() int
 }
 
+// ChunkDecoder can decode an IFF chunk.
 type ChunkDecoder interface {
+	// Decode an IFF chunk.
 	Decode(*Decoder, *io.SectionReader, string) (Chunk, error)
 }
 
@@ -74,11 +77,18 @@ func (decoder unknownChunkDecoder) Decode(dec *Decoder, r *io.SectionReader, kin
 	return chunk, nil
 }
 
+// Unknown chunk holds the raw bytes.
 type Unknown struct {
 	kind string
 	size int64
 	data []byte
 }
 
+// Type of chunk.
 func (chunk Unknown) Type() string { return chunk.kind }
-func (chunk Unknown) Len() int     { return int(chunk.size) }
+
+// Len is the length of the chunk in bytes.
+func (chunk Unknown) Len() int { return int(chunk.size) }
+
+// Bytes are the raw chunk bytes.
+func (chunk Unknown) Bytes() []byte { return chunk.data }
