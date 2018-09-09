@@ -5,6 +5,14 @@ them to an image or animated GIF.
 
 ## Supported parsers
 
+### Image
+
+#### [Borland Graphics Interface](image/bgi) or BGI
+
+#### [Interleaved Bitmap](image/ilbm) (LBM/PBM)
+
+#### [PiCture eXchange](image/pcx) (PCX)
+
 ### Text
 
 #### [ANSi](text/ansi)
