@@ -1,3 +1,6 @@
+/*
+Package bgi implements Borland Graphics Interface images.
+*/
 package bgi
 
 /*

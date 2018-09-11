@@ -2,8 +2,10 @@ package teletext
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -68,7 +70,7 @@ parsing:
 				pp *= 0x100
 			}
 
-			if page.Number != FirstPage {
+			if page.Number != defaultPage {
 				status, lang, cycleTime, CycleTimeType := page.status, page.Language, page.CycleTime, page.CycleTimeType
 				page = NewPage()
 				page.status = status
@@ -125,7 +127,11 @@ parsing:
 			if row, err = strconv.Atoi(args[:i]); err != nil {
 				return nil, fmt.Errorf("teletext: line %d: illegal output line %q: %v", lineno, args, err)
 			}
-			page.SetRow(uint8(row), []byte(args[i+1:]))
+			var line [40]byte
+			copy(line[:], bytes.TrimRight([]byte(args[i+1:]), "\r\n"))
+			log.Printf("set row %d: %q", row, line)
+			page.SetLine(row, line)
+			//page.SetLineBytes(row, []byte(args[i+1:]))
 
 		case "FL": // Fastext links
 			// FL,104,104,105,106,F,100
@@ -143,11 +149,11 @@ parsing:
 			if u64, err = strconv.ParseUint(args[:1], 16, 32); err != nil {
 				return nil, fmt.Errorf("teletext: line %d: page function line %q: %v", lineno, args, err)
 			}
-			page.function = PageFunction(u64)
+			page.function = Function(u64)
 			if u64, err = strconv.ParseUint(args[2:], 16, 32); err != nil {
 				return nil, fmt.Errorf("teletext: line %d: page function line %q: %v", lineno, args, err)
 			}
-			page.coding = PageCoding(u64)
+			page.coding = Coding(u64)
 
 		case "MS": // Mask
 		case "RD":

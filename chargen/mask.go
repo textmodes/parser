@@ -5,7 +5,7 @@ import (
 	"image/color"
 )
 
-// Mask alpha colors.
+// Bitmap mask alpha colors.
 var (
 	Opaque      = color.Alpha{A: 0xff}
 	Transparent = color.Alpha{A: 0x00}
@@ -46,40 +46,74 @@ Now, for each character, the bits are aligned horizontally:
 We can now use this bitmap as an image.Alpha image.
 */
 
-// Mask has a bitmap pixel mask.
-type Mask struct {
-	data       []byte
-	size       image.Point     // size of each character
+// MaskOptions are the options for generating a Mask.
+type MaskOptions struct {
+	// Size of each character. If a coordinate is left empty the Mask function
+	// returns nil.
+	Size image.Point
+
+	// StrideX is the amount of bits to advance for each character scan line. If
+	// left empty, it defaults to the character width.
+	StrideX int
+
+	// Scale factor.
+	Scale uint
+
+	// Smoothing for scaling up.
+	Smoothing bool
+}
+
+// Mask for a chargen font; each character is laid out horizontally in the
+// mask image.
+type Mask interface {
+	image.Image
+
+	// Characters is the number of characters in the mask.
+	Characters() uint16
+
+	// CharacterSize is the pixel size of each character.
+	CharacterSize() image.Point
+
+	// SubMask returns a mask representing the portion of the mask visible through the passed bounds.
+	SubMask(image.Rectangle) Mask
+}
+
+type bitmap struct {
+	opts       MaskOptions
 	bounds     image.Rectangle // size of image
 	characters uint16
 	stride     int
+	data       []byte
 }
 
 // NewMask returns a mask from image data with character dimensions as
 // specified with size. The image data is converted to gray scale values; all
 // values brigher than 50% will be opaque, others will be transparent.
-func NewMask(im image.Image, size image.Point) *Mask {
-	if size.X < 1 || size.Y < 1 {
+func NewMask(im image.Image, opts MaskOptions) Mask {
+	if opts.Size.X < 1 || opts.Size.Y < 1 {
 		return nil
+	}
+
+	if opts.StrideX < 1 {
+		opts.StrideX = opts.Size.X
 	}
 	var (
 		r          = im.Bounds()
-		stride     = size.X * size.Y
-		characters = r.Max.X / size.X
-		mask       = &Mask{
-			// im:         image.NewAlpha(r),
+		characters = r.Max.X / opts.StrideX
+		stride     = opts.StrideX * opts.Size.Y
+		mask       = &bitmap{
+			opts:       opts,
 			data:       make([]byte, (characters*stride+7)>>3),
-			size:       size,
-			bounds:     image.Rect(0, 0, size.X*characters, size.Y),
+			bounds:     image.Rect(0, 0, opts.Size.X*characters, opts.Size.Y),
 			characters: uint16(characters),
 			stride:     stride,
 		}
 		bits uint
 	)
 	for c := 0; c < characters; c++ {
-		offset := c * size.X
-		for y := 0; y < size.Y; y++ {
-			for x := 0; x < size.X; x++ {
+		offset := c * opts.StrideX
+		for y := 0; y < opts.Size.Y; y++ {
+			for x := 0; x < opts.Size.X; x++ {
 				if gray := color.GrayModel.Convert(im.At(x+offset, y)).(color.Gray); gray.Y >= 0x80 {
 					var (
 						buf = bits / 8
@@ -96,17 +130,21 @@ func NewMask(im image.Image, size image.Point) *Mask {
 
 // NewBytesMask returns a mask from bitmap data with character dimensions as
 // specified with size.
-func NewBytesMask(data []byte, size image.Point) *Mask {
-	if size.X < 1 || size.Y < 1 {
+func NewBytesMask(data []byte, opts MaskOptions) Mask {
+	if opts.Size.X < 1 || opts.Size.Y < 1 {
 		return nil
 	}
+
+	if opts.StrideX < 1 {
+		opts.StrideX = opts.Size.X
+	}
 	var (
-		stride     = size.X * size.Y
+		stride     = opts.StrideX * opts.Size.Y
 		characters = (len(data) * 8) / stride
-		mask       = &Mask{
+		mask       = &bitmap{
+			opts:       opts,
 			data:       data,
-			size:       size,
-			bounds:     image.Rect(0, 0, characters*size.X, size.Y),
+			bounds:     image.Rect(0, 0, characters*opts.Size.X, opts.Size.Y),
 			characters: uint16(characters),
 			stride:     stride,
 		}
@@ -114,8 +152,28 @@ func NewBytesMask(data []byte, size image.Point) *Mask {
 	return mask
 }
 
+func (mask *bitmap) Characters() uint16 {
+	if mask == nil {
+		return 0
+	}
+	return mask.characters
+}
+
+func (mask *bitmap) CharacterSize() image.Point {
+	if mask == nil {
+		return image.Point{}
+	}
+	if mask.opts.Scale == 0 {
+		return mask.opts.Size
+	}
+	return image.Pt(mask.opts.Size.X<<mask.opts.Scale, mask.opts.Size.Y<<mask.opts.Scale)
+}
+
 // At returns the alpha mask of the pixel at (x, y).
-func (mask *Mask) At(x, y int) color.Color {
+func (mask *bitmap) At(x, y int) color.Color {
+	if mask == nil {
+		return Transparent
+	}
 	/*
 			Picture a 2x3 font (I know, TINY!), starting with char 'A', layed out
 			in memory looks like:
@@ -173,13 +231,116 @@ func (mask *Mask) At(x, y int) color.Color {
 				buffer[offset] = GGHHHHHH
 				                       ^ bit 2
 	*/
+	if mask.opts.Scale == 1 && mask.opts.Smoothing {
+		/*
+
+			Font smoothing goes like this, imagine a diagonal line in the original
+			like such:
+
+				+--+--+							+--+--+							+--+--+
+				|  |##|             |##|  |             |##|  |
+				+--+--+             +--+--+             +--+--+
+			  |##|  |             |  |##|             |##|##|
+				+--+--+             +--+--+             +--+--+
+
+			Scaling this up without smoothing, would result in:
+
+				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
+				|  |  |##|##|       |##|##|  |  |       |##|##|  |  |
+				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
+				|  |  |##|##|       |##|##|  |  |       |##|##|  |  |
+				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
+				|##|##|  |  |       |  |  |##|##|       |##|##|##|##|
+				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
+				|##|##|  |  |       |  |  |##|##|       |##|##|##|##|
+				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
+
+			With smoothing enabled (notice the last block does *not* smooth):
+
+				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
+				|  |  |##|##|       |##|##|  |  |       |##|##|  |  |
+				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
+				|  |##|##|##|       |##|##|##|  |       |##|##|  |  |
+				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
+				|##|##|##|  |       |  |##|##|##|       |##|##|##|##|
+				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
+				|##|##|  |  |       |  |  |##|##|       |##|##|##|##|
+				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
+
+			Half dot is inserted before or after a whole dot in the presence of
+			a diagonal in the matrix.
+
+		*/
+		var (
+			/*
+				+--+--+--+
+				|nw|n |ne|
+				+--+--+--+
+				|w |xy|e |
+				+--+--+--+
+				|sw|s |se|
+				+--+--+--+
+			*/
+			sx, sy = x >> 1, y >> 1
+			n      = mask.bit(sx+0, sy-1)
+			nw     = mask.bit(sx-1, sy-1)
+			ne     = mask.bit(sx+1, sy-1)
+			w      = mask.bit(sx-1, sy+0)
+			xy     = mask.bit(sx+0, sy+0)
+			e      = mask.bit(sx+1, sy+0)
+			sw     = mask.bit(sx-1, sy+1)
+			s      = mask.bit(sx+0, sy+1)
+			se     = mask.bit(sx+1, sy+1)
+		)
+		if xy {
+			return Opaque
+		}
+		switch x & 0x01 {
+		case 0x00:
+			switch y & 0x01 {
+			case 0x00: // upper left
+				if !nw && n && w {
+					return Opaque
+				}
+			case 0x01: // lower left
+				if !sw && s && w {
+					return Opaque
+				}
+			}
+		case 0x01:
+			switch y & 0x01 {
+			case 0x00: // upper right
+				if !ne && n && e {
+					return Opaque
+				}
+			case 0x01: // lower right
+				if !se && s && e {
+					return Opaque
+				}
+			}
+		}
+		/*
+			var (
+				w, e = mask.bit(sx-1, sy), mask.bit(sx+1, y)
+				n, s = mask.bit(sx, sy-1), mask.bit(sx, sy+1)
+			)
+			if (w && e && n) || (e && n && s) || (n && s && w) || (s && w && e) {
+				return Opaque
+			}
+		*/
+		return Transparent
+	} else if mask.opts.Scale > 0 {
+		// Scale down coordinates according to scale rules.
+		x >>= mask.opts.Scale
+		y >>= mask.opts.Scale
+	}
 	var (
-		char   = x / mask.size.X
-		stride = mask.size.X * mask.size.Y
-		start  = char * stride
-		bits   = start + y*mask.size.X + (x % mask.size.X)
-		buf    = bits / 8
-		bit    = uint(7 - (bits % 8))
+		bpp   = mask.opts.StrideX * mask.opts.Size.Y
+		char  = x / mask.opts.StrideX
+		start = char * bpp
+		bits  = start + y*mask.opts.StrideX + (x % mask.opts.StrideX)
+		buf   = bits >> 3
+		bit   = uint(7 - (bits % 8))
 	)
 	if mask.data[buf]&(1<<bit) == 0 {
 		return Transparent
@@ -187,24 +348,68 @@ func (mask *Mask) At(x, y int) color.Color {
 	return Opaque
 }
 
+func (mask *bitmap) bit(x, y int) bool {
+	if x < 0 || y < 0 {
+		return false
+	}
+	var (
+		bpp   = mask.opts.StrideX * mask.opts.Size.Y
+		char  = x / mask.opts.StrideX
+		start = char * bpp
+		bits  = start + y*mask.opts.StrideX + (x % mask.opts.StrideX)
+		buf   = bits >> 3
+		bit   = uint(7 - (bits % 8))
+	)
+	if buf >= len(mask.data) {
+		return false
+	}
+	return mask.data[buf]&(1<<bit) != 0
+}
+
 // Bounds returns the domain for which At can return non-zero color.
-func (mask *Mask) Bounds() image.Rectangle {
-	return mask.bounds
+func (mask *bitmap) Bounds() image.Rectangle {
+	if mask == nil {
+		return image.Rectangle{}
+	}
+	if mask.opts.Scale == 0 {
+		return mask.bounds
+	}
+	return image.Rect(
+		mask.bounds.Min.X<<mask.opts.Scale,
+		mask.bounds.Min.Y<<mask.opts.Scale,
+		mask.bounds.Max.X<<mask.opts.Scale,
+		mask.bounds.Max.Y<<mask.opts.Scale,
+	)
 }
 
 // ColorModel returns color.AlphaModel (8-bit alpha values).
-func (mask *Mask) ColorModel() color.Model {
+func (mask bitmap) ColorModel() color.Model {
 	return color.AlphaModel
 }
 
 // SubMask returns a mask representing the portion of the mask visible
 // through r. The returned value shares pixels with the original image.
-func (mask *Mask) SubMask(r image.Rectangle) *Mask {
-	return &Mask{
-		data:   mask.data,
-		size:   mask.size,
-		bounds: r,
+func (mask *bitmap) SubMask(r image.Rectangle) Mask {
+	if mask == nil {
+		return nil
+	}
+	if mask.opts.Scale > 0 {
+		r.Min.X >>= mask.opts.Scale
+		r.Min.Y >>= mask.opts.Scale
+		r.Max.X >>= mask.opts.Scale
+		r.Max.Y >>= mask.opts.Scale
+	}
+	r = r.Intersect(mask.bounds)
+	if r.Empty() {
+		return nil
+	}
+	return &bitmap{
+		opts:       mask.opts,
+		data:       mask.data,
+		bounds:     r,
+		characters: mask.characters,
+		stride:     mask.stride,
 	}
 }
 
-var _ image.Image = (*Mask)(nil)
+var _ image.Image = (*bitmap)(nil)

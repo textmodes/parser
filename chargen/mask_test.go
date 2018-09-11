@@ -6,10 +6,10 @@ import (
 )
 
 func TestMaskSize(t *testing.T) {
-	if mask := NewMask(nil, image.Pt(-1, -1)); mask != nil {
+	if mask := NewMask(nil, MaskOptions{Size: image.Pt(-1, -1)}); mask != nil {
 		t.Fatalf("NewMask(..., image.Point{-1, -1}) should return nil, got %T", mask)
 	}
-	if mask := NewBytesMask(nil, image.Pt(-1, -1)); mask != nil {
+	if mask := NewBytesMask(nil, MaskOptions{Size: image.Pt(-1, -1)}); mask != nil {
 		t.Fatalf("NewBytesMask(..., image.Point{-1, -1}) should return nil, got %T", mask)
 	}
 }

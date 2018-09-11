@@ -25,7 +25,7 @@ func testMaskFont(t *testing.T, data []byte, size image.Point) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		mask := NewMask(i, size)
+		mask := NewMask(i, MaskOptions{Size: size})
 		testFont(t, mask, size, "mask")
 	})
 }
@@ -33,11 +33,11 @@ func testMaskFont(t *testing.T, data []byte, size image.Point) {
 func testBytesMaskFont(t *testing.T, data []byte, size image.Point) {
 	t.Helper()
 	t.Run(fmt.Sprintf("%dx%d", size.X, size.Y), func(t *testing.T) {
-		testFont(t, NewBytesMask(data, size), size, "bytes-mask")
+		testFont(t, NewBytesMask(data, MaskOptions{Size: size}), size, "bytes-mask")
 	})
 }
 
-func testFont(t *testing.T, mask *Mask, size image.Point, name string) {
+func testFont(t *testing.T, mask Mask, size image.Point, name string) {
 	t.Helper()
 
 	if model := mask.ColorModel(); model != color.AlphaModel {
@@ -65,7 +65,7 @@ func testFont(t *testing.T, mask *Mask, size image.Point, name string) {
 		if err = png.Encode(f, im); err != nil {
 			t.Fatal(err)
 		}
-		if err = ioutil.WriteFile(fmt.Sprintf("testdata/test-font-%s-%dx%d.bin", name, size.X, size.Y), mask.data, 0644); err != nil {
+		if err = ioutil.WriteFile(fmt.Sprintf("testdata/test-font-%s-%dx%d.bin", name, size.X, size.Y), mask.(*bitmap).data, 0644); err != nil {
 			t.Fatal(err)
 		}
 	}

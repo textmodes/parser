@@ -1,55 +1,21 @@
 package teletext
 
 import (
+	"bytes"
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
-	"strings"
+	"log"
+	"time"
 
-	"github.com/golang/freetype"
-	"golang.org/x/image/math/fixed"
+	"github.com/textmodes/parser/chargen"
+	"github.com/textmodes/parser/data"
 )
 
-// Page constants
-const (
-	FirstPage = 0x1ff00
-)
+const DefaultHeader = "XXXXXXXXGOLANG mpp DAY dd MTH \x03 hh:nn.ss"
 
-// PageCoding is the page coding.
-type PageCoding uint8
-
-// PageCodings
-const (
-	Coding7BitText PageCoding = iota
-	Coding8BitData
-	Coding13Triplets
-	CodingHamming8_4
-)
-
-// PageFunction is the page function.
-type PageFunction uint8
-
-// PageFunctions
-const (
-	LOP PageFunction = iota
-	DATABROADCAST
-	GPOP
-	POP
-	GDRCS
-	DRCS
-	MOT
-	MIP
-	BTT
-	AIT
-	MPT
-	MPTEX
-)
-
-// Page of TeleText data.
 type Page struct {
-	// Lines data.
-	Lines Lines
-
 	// CycleTime in seconds.
 	CycleTime int // (CT) Seconds
 
@@ -76,414 +42,137 @@ type Page struct {
 	subCode     uint   // (SC)
 	status      int    // (PS)
 	region      int    // (RE)
-	coding      PageCoding
-	function    PageFunction
+	coding      Coding
+	function    Function
 	lastPacket  uint8
+	data        [25][40]byte
+	attr        [25][40]attr
 }
 
-// NewPage returns a blank page with the first page number and the default
-// palette assigned.
+const defaultPage = 0x1ff00
+
 func NewPage() *Page {
-	return &Page{
-		Number:  FirstPage,
-		Palette: Palette,
-	}
+	page := &Page{Number: defaultPage}
+	page.Clear()
+	return page
 }
 
-const (
-	imageStrideX = 6
-	imageStrideY = 9
-	imageScale   = 2
-)
-
-// Image of the page.
-func (page *Page) Image() (image.Image, error) {
-	// Load font
-	fontBytes, err := FSByte(false, "/MODE7GX3.TTF")
-	if err != nil {
-		return nil, err
-	}
-	font, err := freetype.ParseFont(fontBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	palette := make([]image.Image, len(page.Palette))
-	for i, c := range page.Palette {
-		palette[i] = image.NewUniform(c)
-	}
-
-	im := image.NewPaletted(image.Rect(0, 0, 40*imageStrideX*imageScale, 25*imageStrideY*imageScale), page.Palette)
-	draw.Draw(im, im.Bounds(), palette[0], image.ZP, draw.Src)
-
-	ctx := freetype.NewContext()
-	ctx.SetDPI(72) //screen resolution in Dots Per Inch
-	ctx.SetFont(font)
-	ctx.SetFontSize(7.5 * imageScale) //font size in points
-	ctx.SetClip(im.Bounds())
-	ctx.SetDst(im)
-	ctx.SetSrc(palette[7])
-
-	var fg, bg int
-	for row, rows := 0, len(page.Lines); row < rows; row++ {
-		line := page.Lines[row]
-		if line == nil {
-			switch row {
-			case 0:
-				line = &BlankHeader
-			default:
-				line = &Blank
-			}
-		}
-
-		if row == 0 {
-			header := Line(line.Header(page))
-			line = &header
-		}
-
-		var (
-			graphicsMode bool
-			doubleHeight bool
-			skipNextRow  bool
-			flashing     bool
-			hold         bool
-			holdChar     byte = ' '
-			concealed    bool
-			separated    bool
-		)
-
-		fg, bg = White, Black
-		for col, c := range *line {
-			var d = rune(' ')
-			switch c {
-			case CodeAlphaBlack,
-				CodeAlphaRed,
-				CodeAlphaGreen,
-				CodeAlphaYellow,
-				CodeAlphaBlue,
-				CodeAlphaMagenta,
-				CodeAlphaCyan,
-				CodeAlphaWhite:
-				hold = false
-			case CodeFlash:
-				flashing = true
-			case CodeSteady:
-				flashing = false
-			case CodeEndBox, CodeStartBox:
-			case CodeDoubleHeight, // Double height
-				CodeGraphicsBlack,   // Graphics black (level 2.5+)
-				CodeGraphicsRed,     // Graphics red
-				CodeGraphicsGreen,   // Graphics green
-				CodeGraphicsYellow,  // Graphics yellow
-				CodeGraphicsBlue,    // Graphics blue
-				CodeGraphicsMagenta, // Graphics magenta
-				CodeGraphicsCyan,    // Graphics cyan
-				CodeGraphicsWhite:   // Graphics white
-			case CodeConcealDisplay: // Conceal display
-				concealed = true
-			case CodeContiguousGraphics: // Contiguous graphics
-				separated = false
-			case CodeSeparatedGraphics: // Separated gfx
-				separated = true
-			case CodeBlackBackground: // Background black
-				bg = Black
-			case CodeNewBackground: // New background
-				bg = fg
-			case CodeHoldGraphics: // Hold gfx (set at)
-				hold = true
-			case CodeReleaseGraphics: // Release gfx (set after)
-			case 14, 15: // Ignore shift in/shift out and avoid them falling into default
-			default:
-				d = mapTextChar(page.region, page.Language, rune(c))
-				c &= 0x7f
-
-				/*
-				   ch2=str[col];
-				   ch2=mapTextChar(ch2);
-				   // holdchar records the last mosaic character sent out
-				*/
-				if isMosaic(c) {
-					holdChar = c // In case we encounter hold mosaics (Space doesn't count as a mosaic)
-				}
-			}
-
-			if concealed {
-				// Replace text with spaces
-				c, d, holdChar = ' ', ' ', ' '
-			}
-
-			if graphicsMode && (hold || isMosaic(c)) { // Draw graphics. Either mosaic (but not capital A..Z) or in hold mode
-				if hold {
-					c = holdChar
-				}
-				/*
-					d = 0xe200 | rune(c)
-					if doubleHeight {
-						if separated {
-							d += 0x0100
-						} else {
-							d += 0x0040
-						}
-					} else {
-						if separated {
-							d += 0x00c0
-						}
-					}
-					log.Printf("graphics mode char %#02x -> %#04x", c, d)
-					ctx.DrawString(string(d), fixed.P(
-						imageStrideX*imageScale*(col),
-						imageStrideY*imageScale*(row+1),
-					))
-				*/
-				if doubleHeight {
-					page.imageGraphics(im, c, palette[fg], palette[bg], col, row, imageStrideX*imageScale, imageStrideY*imageScale*2, separated)
-				} else {
-					page.imageGraphics(im, c, palette[fg], palette[bg], col, row, imageStrideX*imageScale, imageStrideY*imageScale, separated)
-				}
-			} else { // Graphic block
-				// Foreground color
-				if !flashing {
-					ctx.SetSrc(palette[fg])
-				} else {
-					ctx.SetSrc(palette[bg])
-				}
-
-				// Background color
-				if doubleHeight {
-					if d >= 0x0020 && d <= 0x00ff {
-						ctx.DrawString(string(0xe000|d), fixed.P(
-							imageStrideX*imageScale*(col),
-							imageStrideY*imageScale*(row+1),
-						))
-					}
-				} else {
-					ctx.DrawString(string(d), fixed.P(
-						imageStrideX*imageScale*(col),
-						imageStrideY*imageScale*(row+1),
-					))
-				}
-			}
-
-			// Set-after codes implemented here
-			switch (*line)[col] {
-			case CodeAlphaBlack:
-				fg = Black
-				concealed = false // Side effect of colour. It cancels a conceal.
-				graphicsMode = false
-			case CodeAlphaRed:
-				fg = Red
-				concealed = false
-				graphicsMode = false
-			case CodeAlphaGreen:
-				fg = Green
-				concealed = false
-				graphicsMode = false
-			case CodeAlphaYellow:
-				fg = Yellow
-				concealed = false
-				graphicsMode = false
-			case CodeAlphaBlue:
-				fg = Blue
-				concealed = false
-				graphicsMode = false
-			case CodeAlphaMagenta:
-				fg = Magenta
-				concealed = false
-				graphicsMode = false
-			case CodeAlphaCyan:
-				fg = Cyan
-				concealed = false
-				graphicsMode = false
-			case CodeAlphaWhite:
-				fg = White
-				concealed = false
-				graphicsMode = false
-			case CodeFlash:
-				flashing = true
-			case CodeSteady:
-			case CodeEndBox:
-			case CodeStartBox:
-			case CodeNormalHeight: // Normal height
-				doubleHeight = false
-			case CodeDoubleHeight: // Double height
-				doubleHeight = true
-				skipNextRow = true // ETSI: Don't use content from next row
-			case CodeGraphicsBlack: // Graphics black
-				fg = Black
-				concealed = false
-				graphicsMode = true
-			case CodeGraphicsRed: // Graphics red
-				fg = Red
-				concealed = false
-				graphicsMode = true
-			case CodeGraphicsGreen: // Graphics green
-				fg = Green
-				concealed = false
-				graphicsMode = true
-			case CodeGraphicsYellow: // Graphics yellow
-				fg = Yellow
-				concealed = false
-				graphicsMode = true
-			case CodeGraphicsBlue: // Graphics blue
-				fg = Blue
-				concealed = false
-				graphicsMode = true
-			case CodeGraphicsMagenta: // Graphics magenta
-				fg = Magenta
-				concealed = false
-				graphicsMode = true
-			case CodeGraphicsCyan: // Graphics cyan
-				fg = Cyan
-				concealed = false
-				graphicsMode = true
-			case CodeGraphicsWhite: // Graphics white
-				fg = White
-				concealed = false
-				graphicsMode = true
-			case CodeConcealDisplay: // Conceal display
-			case CodeContiguousGraphics: // Contiguous graphics
-			case CodeSeparatedGraphics: // Separated gfx
-			case CodeBlackBackground: // Background black
-			case CodeNewBackground: // New background
-			case CodeHoldGraphics: // Hold gfx
-			case CodeReleaseGraphics: // Separated gfx
-				hold = false
-			default:
-			}
-
-			if skipNextRow {
-				row++
-			}
+// Clear page.
+func (page *Page) Clear() {
+	for y := 0; y < len(page.data); y++ {
+		for x := 0; x < len(page.data[y]); x++ {
+			page.data[y][x] = 0x20
+			page.attr[y][x].fg = 7
+			page.attr[y][x].bg = 0
+			page.attr[y][x].doubleWidth = false
+			page.attr[y][x].doubleHeight = false
 		}
 	}
-
-	return im, nil
+	copy(page.data[0][:], []byte(DefaultHeader))
 }
 
-/*
-
-  Graphics are layed out in a 2x3 grid:
-
-    +--+--+
-    | 1| 2|
-    +--+--+
-    | 4| 8|
-    +--+--+
-    |16|64|
-    +--+--+
-
-  The base value for the codes is 160, so that they lie in the ranges 160 to
-  191 and 224 to 255. For example:
-
-    +--+--+
-    |##|  |
-    +--+--+
-    |  |##|
-    +--+--+
-    |##|  |
-    +--+--+
-
-  has a code of 160 + 1 + 8 + 16 = 185
-
-*/
-func (page *Page) imageGraphics(im *image.Paletted, c byte, fg, bg image.Image, col, row, strideX, strideY int, separated bool) {
-	var (
-		ox = col * strideX
-		oy = row * strideY
-		dx = strideX / 2
-		dy = strideY / 3
-		sx int
-		r  = image.Rect(0, 0, dx, dy)
-		d  image.Image
-	)
-	if separated {
-		if sx = dx / 3; sx == 0 {
-			sx = 1
-		}
-		//r.Max.X -= sx
+// Line returns the row bytes.
+func (page Page) Line(row int) [40]byte {
+	if row == 0 {
+		return page.Header()
 	}
-	for i, j := byte(0), byte(1); i < 6; i++ {
-		if c&j != 0 {
-			d = fg
-		} else {
-			d = bg
-		}
-
-		j <<= 1
-		if j == 0x20 {
-			j <<= 1
-		}
-
-		draw.Draw(im, r.Add(image.Pt(ox+dx*int(i%2)-sx, oy+dy*int(i/2))), d, image.ZP, draw.Src)
-	}
+	return page.data[row]
 }
 
-func (page Page) String() string {
-	var part []string
-	for _, line := range page.Lines {
-		if line == nil {
-			break
-		}
-		part = append(part, line.String())
+// LineAt returns the row bytes.
+func (page Page) LineAt(row int, now time.Time) [40]byte {
+	if row == 0 {
+		return page.HeaderAt(now)
 	}
-	return strings.Join(part, "\n")
+	return page.data[row]
 }
 
-// SetRow sets the line data for the selected row, rows above the line limit
-// will be discarded.
-func (page *Page) SetRow(row uint8, line []byte) {
-	if row > uint8(len(page.Lines)) {
+// SetLine sets the row bytes.
+func (page *Page) SetLine(row int, line [40]byte) {
+	if row < 0 || row >= len(page.data) {
 		return
 	}
-
-	if row == 28 && len(line) >= 40 {
-		if dc := line[0] & 0x0f; dc == 0 || dc == 2 || dc == 3 || dc == 4 {
-			// packet is X/28/0, X/28/2, X/28/3, or X/28/4
-			triplet := uint32(line[1] & 0x3f)
-			triplet |= uint32(line[2]&0x3f) << 6
-			triplet |= uint32(line[3]&0x3f) << 12
-			page.coding = PageCoding((triplet & 0x70) >> 4)
-			page.function = PageFunction(uint8(triplet & 0x0f))
-		}
-	}
-
-	if row == 26 && len(line) >= 40 {
-		if dc := (line[0] & 0x0f) + 26; dc > page.lastPacket {
-			page.lastPacket = dc
-		}
-	} else if row < 26 {
-		if row > page.lastPacket {
-			page.lastPacket = row
-		}
-	}
-
-	if page.Lines[row] == nil {
-		page.Lines[row] = NewLine(line)
-	} else if row < 26 {
-		page.Lines[row].Set(line, true)
-	} else {
-		// Enhanced packet
-		page.Lines.Append(NewLine(line))
-	}
+	copy(page.data[row][:], line[:])
 }
 
-// Pages slice of Page.
-type Pages []*Page
+// SetLineBytes sets the row from escaped bytes.
+func (page *Page) SetLineBytes(row int, line []byte) {
+	if row < 0 || row >= len(page.data) {
+		return
+	}
+	var i, col int
+	for i = 0; i < len(line) && col < 40; i++ {
+		switch c := line[i] & 0x7f; c {
+		case 0x1b: // Escaped
+			i++
+			if i >= len(line) {
+				break
+			}
+			page.data[row][col] = line[i] & 0x3f
+			col++
+		case 0x00: // NULL
+			page.data[row][col] = 0x80 // Black text
+			col++
+		default:
+			page.data[row][col] = c
+			col++
+		}
+	}
+	for ; col < 40; col++ {
+		page.data[row][col] = 0x20
+	}
+	return
+}
 
-// Color names
-const (
-	Black = iota
-	Red
-	Green
-	Yellow
-	Blue
-	Magenta
-	Cyan
-	White
-)
+// Header bytes.
+func (page Page) Header() [40]byte {
+	return page.HeaderAt(time.Now())
+}
 
-// Palette is the default TeleText Level 1 palette.
-var Palette = color.Palette{
+// HeaderAt are the header bytes at time now.
+func (page Page) HeaderAt(now time.Time) (line [40]byte) {
+	raw := make([]byte, 40)
+
+	// Page number
+	var k = page.Number / 0x100
+	if k < 0x100 || k > 0x8ff {
+		k = 0x100
+	}
+
+	copy(raw[:], page.data[0][:])
+
+	replace := func(b, sub []byte, formats ...string) []byte {
+		for _, format := range formats {
+			if i := bytes.Index(b, []byte(format)); i != -1 {
+				return append(append(b[:i], sub...), b[i+len(sub):]...)
+			}
+		}
+		return b
+	}
+
+	// Magazine and page number
+	raw = replace(raw, []byte(fmt.Sprintf("P%03x    ", k)), "XXXXXXXX")
+	raw = replace(raw, []byte(fmt.Sprintf("%03x", k)), "mpp", "%%#", "%%£")
+
+	// Day number and name
+	raw = replace(raw, []byte(now.Format("02")), "dd", "%d")
+	raw = replace(raw, []byte(now.Format("Mon")), "DAY", "%%a")
+
+	// Month name and seconds
+	raw = replace(raw, []byte(now.Format("Jan")), "MTH", "%%b")
+	raw = replace(raw, []byte(now.Format("01")), "uu", "%m")
+
+	// Year, hours, minutes and seconds
+	raw = replace(raw, []byte(now.Format("06")), "yy", "%Y")
+	raw = replace(raw, []byte(now.Format("15")), "hh", "%H")
+	raw = replace(raw, []byte(now.Format("04")), "nn", "%M")
+	raw = replace(raw, []byte(now.Format("05")), "ss", "%S")
+
+	copy(line[:], raw)
+	return
+}
+
+var palette = color.Palette{
 	color.RGBA{0x00, 0x00, 0x00, 0xff}, // 0b000 Black
 	color.RGBA{0xff, 0x00, 0x00, 0xff}, // 0b100 Red
 	color.RGBA{0x00, 0xff, 0x00, 0xff}, // 0b010 Green
@@ -494,16 +183,499 @@ var Palette = color.Palette{
 	color.RGBA{0xff, 0xff, 0xff, 0xff}, // 0b111 White
 }
 
-func isMosaic(c byte) bool {
-	c &= 0x7f
-	return (c >= 0x20 && c < 0x40) || c >= 0x60
+func (page Page) Image() (image.Image, error) {
+	return page.ImageAt(time.Now())
 }
 
-func mapTextChar(region int, lang Language, r rune) rune {
-	if reg, ok := regions[region]; ok {
-		if c, ok := reg[lang]; ok {
-			return c.Rune(r)
+func (page Page) ImageAt(now time.Time) (image.Image, error) {
+	return page.render(true, now)
+}
+
+type charType uint8
+
+const (
+	alphanumeric charType = iota
+	contiguousGraphics
+	separatedGraphics
+)
+
+func (page Page) render(flashing bool, now time.Time) (image.Image, error) {
+	var (
+		im                 = image.NewRGBA(image.Rect(0, 0, 40*12, 25*20))
+		rom, err           = data.Bytes(fmt.Sprintf("font/chargen/saa505%d.bin", page.Language))
+		doubleHeightBottom bool
+		nextCharType       charType
+	)
+	if err != nil {
+		return nil, err
+	}
+	draw.Draw(im, im.Bounds(), image.NewUniform(palette[0]), image.ZP, draw.Src)
+	var (
+		opts = chargen.MaskOptions{Size: image.Pt(8, 10), Scale: 1, Smoothing: true}
+		mask = chargen.NewBytesMask(rom, opts)
+		font = chargen.New(mask)
+	)
+	for row := 0; row < 25; row++ {
+		var (
+			separated        bool
+			graphics         bool
+			graphicsHold     bool
+			doubleHeight     bool
+			doubleHeightNext bool
+			doubleWidth      bool
+			doubleWidthNext  bool
+			doubleWidthRight bool
+			heldCharType     charType
+			flash            bool
+			fg               = palette[7]
+			bg               = palette[0]
+			graphicsLast     uint8
+			debug            = row == 1
+		)
+		nextCharType = alphanumeric
+		heldCharType = alphanumeric
+		log.Printf("line %d: %q", row, page.LineAt(row, now))
+		for col, code := range page.LineAt(row, now) {
+			var (
+				ctrl              = code & 0x7f // 7-bit
+				graphicsHoldOff   bool
+				graphicsHoldClear bool
+				currCharType      = nextCharType
+			)
+			if debug {
+				log.Printf("(%d, %d) code %#02x (%s, %#02x)", col, row, code, codeName(code), ctrl)
+			}
+			if ctrl < 0x20 {
+				switch ctrl {
+				case
+					controlAlphaBlack,
+					controlAlphaRed,
+					controlAlphaGreen,
+					controlAlphaYellow,
+					controlAlphaBlue,
+					controlAlphaMagenta,
+					controlAlphaCyan,
+					controlAlphaWhite:
+					fg = &color.RGBA{
+						0xff * ((ctrl & 1) >> 0),
+						0xff * ((ctrl & 2) >> 1),
+						0xff * ((ctrl & 4) >> 2),
+						0xff,
+					}
+					graphics = false
+					graphicsHoldClear = true
+					if debug {
+						log.Printf("(%d, %d) alpha, fg %+v", col, row, fg)
+					}
+					nextCharType = alphanumeric
+				case controlFlash:
+					flash = true
+					if debug {
+						log.Printf("(%d, %d) flash on", col, row)
+					}
+				case controlSteady:
+					flash = false
+					if debug {
+						log.Printf("(%d, %d) flash off", col, row)
+					}
+				case controlEndBox, controlStartBox:
+				case controlNormalHeight:
+					doubleHeight = false
+				case controlDoubleHeight:
+					doubleHeight = true
+					if !doubleHeightBottom {
+						doubleHeightNext = true
+					}
+				case controlDoubleWidth:
+					doubleWidth = true
+					if !doubleWidthRight {
+						doubleWidthNext = true
+					}
+				case controlDoubleSize:
+					if col < 39 {
+						doubleHeight = true
+						if !doubleHeightBottom {
+							doubleHeightNext = true
+						}
+					}
+					if row < 23 {
+						doubleWidth = true
+						if !doubleWidthRight {
+							doubleWidthNext = true
+						}
+					}
+				case
+					controlMosaicBlack,
+					controlMosaicRed,
+					controlMosaicGreen,
+					controlMosaicYellow,
+					controlMosaicBlue,
+					controlMosaicMagenta,
+					controlMosaicCyan,
+					controlMosaicWhite:
+					fg = &color.RGBA{
+						0xff * ((ctrl & 1) >> 0),
+						0xff * ((ctrl & 2) >> 1),
+						0xff * ((ctrl & 4) >> 2),
+						0xff,
+					}
+					graphics = true
+					if separated {
+						nextCharType = separatedGraphics
+					} else {
+						nextCharType = contiguousGraphics
+					}
+					if debug {
+						log.Printf("(%d, %d) graphics, fg %+v", col, row, fg)
+					}
+				case controlConcealDisplay:
+					fg = bg
+					if debug {
+						log.Printf("(%d, %d) conceal, fg %+v", col, row, fg)
+					}
+				case controlContiguousMosaic:
+					separated = false
+					nextCharType = contiguousGraphics
+				case controlSeparatedMosaic:
+					separated = true
+					nextCharType = separatedGraphics
+				case controlESC:
+				case controlBlackBackground:
+					bg = palette[0]
+					if debug {
+						log.Printf("(%d, %d) black background, bg %+v", col, row, bg)
+					}
+				case controlNewBackground:
+					bg = fg
+					if debug {
+						log.Printf("(%d, %d) new background, bg %+v", col, row, bg)
+					}
+				case controlHoldMosaic:
+					graphicsHold = true
+				case controlReleaseMosaic:
+					graphicsHoldOff = true
+				}
+
+				if graphics && graphicsHold {
+					log.Printf("graphics held: %q -> %q", code, graphicsLast)
+					code = graphicsLast
+					if code >= 0x40 && code < 0x60 {
+						code = 0x20
+					}
+					currCharType = heldCharType
+				} else {
+					code = 0x20
+				}
+			} else /* code < ' ' */ if graphics {
+				graphicsLast = code
+				heldCharType = currCharType
+			} else if code == 0x20 {
+				graphics = false
+			}
+
+			var skip bool
+
+			if graphicsHoldOff {
+				graphicsHold = false
+				graphicsLast = ' '
+			}
+			if graphicsHoldClear {
+				graphicsLast = ' '
+			}
+
+			// Only display char if we're *not* flashing
+			if flash && !flashing {
+				log.Printf("flash but not flashing: %q -> %q", code, graphicsLast)
+				code = ' '
+			}
+
+			if doubleHeight {
+
+			} else if doubleHeightBottom {
+				skip = true
+			}
+			if doubleWidth {
+
+			} else if doubleWidthRight {
+				skip = true
+			}
+
+			if !skip {
+				if graphics {
+					if debug {
+						log.Printf("(%d, %d) graphics %#02x", col, row, code)
+					}
+					page.renderMosaic(im, font, col, row, fg, bg, code, separated, doubleHeight, doubleWidth)
+				} else {
+					if debug {
+						log.Printf("(%d, %d) alpha %q (%d) color %v on %v", col, row, code&0x7f, code, fg, bg)
+					}
+					page.renderChar(im, font, col, row, fg, bg, code, doubleHeight, doubleWidth)
+				}
+			} else {
+				if debug {
+					log.Printf("(%d, %d) skip", col, row)
+				}
+			}
+			doubleWidthRight = doubleWidthNext
+		}
+		doubleHeightBottom = doubleHeightNext
+	}
+
+	return im, nil
+}
+
+func (page Page) renderChar(im *image.RGBA, font *chargen.Font, col, row int, fg, bg color.Color, code byte, doubleHeight, doubleWidth bool) {
+	var (
+		char = code & 0x7f // 7-bit
+		w    = 12
+		h    = 20
+	)
+	if doubleHeight {
+		h <<= 1
+	}
+	if doubleWidth {
+		w <<= 1
+	}
+	var (
+		x = col * w
+		y = row * h
+	)
+	draw.Draw(im, image.Rect(x, y, x+w, y+h), image.NewUniform(bg), image.ZP, draw.Src)
+	if char >= 0x20 {
+		mask, sp := font.CharMask(uint16(char - 0x20))
+		sp = sp.Add(image.Pt(4, 0)) // First two columns are empty in the font ROM
+		draw.DrawMask(im, im.Bounds().Add(image.Pt(x, y)), image.NewUniform(fg), image.ZP, mask, sp, draw.Over)
+	} else {
+		log.Printf("can't render char %q (%#02x)", char, char)
+	}
+}
+
+func (page Page) renderMosaic(im *image.RGBA, font *chargen.Font, col, row int, fg, bg color.Color, code byte, separated, doubleHeight, doubleWidth bool) {
+	if row < 3 {
+		log.Printf("mosaic %#02x %08b", code, code)
+	}
+	var (
+		char = code - 0x20
+		w    = 12
+		h    = 20
+	)
+	if doubleHeight {
+		h <<= 1
+	}
+	if doubleWidth {
+		w <<= 1
+	}
+	draw.Draw(im, image.Rect(w*col, h*row, w*(col+1), h*(row+1)), image.NewUniform(bg), image.ZP, draw.Src)
+	if code < 0x20 {
+		return
+	}
+	var (
+		b1 = (char & 0x01) == 0x01
+		b2 = (char & 0x02) == 0x02
+		b3 = (char & 0x04) == 0x04
+		b4 = (char & 0x08) == 0x08
+		b5 = (char & 0x10) == 0x10
+		b6 = (char & 0x40) == 0x40
+	)
+	for y := 0; y < h; y++ {
+		var (
+			r  = y
+			oy = y + h*row
+		)
+		if doubleHeight {
+			r /= 2
+		}
+		for x := 0; x < w; x++ {
+			var (
+				c  = x
+				ox = x + w*col
+			)
+			if doubleWidth {
+				c /= 2
+			}
+			if (c < 6 && r < 6 && b1) ||
+				(c > 5 && r < 6 && b2) ||
+				(c < 6 && r > 5 && r < 14 && b3) ||
+				(c > 5 && r > 5 && r < 14 && b4) ||
+				(c < 6 && r > 13 && b5) ||
+				(c > 5 && r > 13 && b6) {
+				im.Set(ox, oy, fg)
+			} else {
+				im.Set(ox, oy, bg)
+			}
+
+			/*
+				if (x+y)%4 == 3 {
+					im.Set(ox, oy, &color.RGBA{0xff, 0x80, 0x00, 0xff})
+				}
+			*/
 		}
 	}
-	return r
 }
+
+func (page Page) renderMosaicChar(im *image.RGBA, font *chargen.Font, col, row int, fg, bg color.Color, code byte, doubleHeight, doubleWidth, separated bool) {
+	var (
+		char = code // 5-bit
+		w    = 12
+		h    = 20
+	)
+	if doubleHeight {
+		h <<= 1
+	}
+	if doubleWidth {
+		w <<= 1
+	}
+	var (
+		x = col * w
+		y = row * h
+	)
+	draw.Draw(im, image.Rect(x, y, x+w, y+h), image.NewUniform(bg), image.ZP, draw.Src)
+	if char >= 0x20 {
+		log.Printf("mosaic (%d, %d) %d: %08b -> %08b", col, row, code, code, code-0x20)
+		mask, sp := font.CharMask(uint16(char-0x20) & 0x3f)
+		sp = sp.Add(image.Pt(4, 0)) // First two columns are empty in the font ROM
+		draw.DrawMask(im, im.Bounds().Add(image.Pt(x, y)), image.NewUniform(fg), image.ZP, mask, sp, draw.Over)
+	}
+}
+
+func (page Page) generateMosaic(data uint8, row int, separated, doubleHeight, doubleWidth bool) (code uint16) {
+	mask := uint(1)
+	if doubleHeight {
+		mask++
+	}
+	switch row >> mask {
+	case 0, 1:
+		if data&0x01 == 0x01 {
+			code += 0xfc0
+		}
+		if data&0x02 == 0x02 {
+			code += 0x03f
+		}
+		if separated {
+			code &= 0x3cf
+		}
+	case 2:
+		if separated {
+			break
+		}
+		if data&0x01 == 0x01 {
+			code += 0xfc0
+		}
+		if data&0x02 == 0x02 {
+			code += 0x03f
+		}
+	case 3, 4, 5:
+		if data&0x04 == 0x04 {
+			code += 0xfc0
+		}
+		if data&0x08 == 0x08 {
+			code += 0x03f
+		}
+		if separated {
+			code &= 0x3cf
+		}
+	case 6:
+		if separated {
+			break
+		}
+		if data&0x04 == 0x04 {
+			code += 0xfc0
+		}
+		if data&0x08 == 0x08 {
+			code += 0x03f
+		}
+	case 7, 8:
+		if data&0x10 == 0x10 {
+			code += 0xfc0
+		}
+		if data&0x40 == 0x40 {
+			code += 0x03f
+		}
+		if separated {
+			code &= 0x3cf
+		}
+	case 9:
+		if separated {
+			break
+		}
+		if data&0x10 == 0x10 {
+			code += 0xfc0
+		}
+		if data&0x40 == 0x40 {
+			code += 0x03f
+		}
+	}
+	return
+}
+
+type Pages []*Page
+
+// Language code.
+type Language int
+
+func (lang Language) String() string {
+	switch lang {
+	case English:
+		return "en"
+	case French:
+		return "fr"
+	case Swedish:
+		return "se"
+	case Czech:
+		return "cz/si"
+	case German:
+		return "de"
+	case Spanish:
+		return "es/pt"
+	case Italian:
+		return "it"
+	default:
+		return "unknown"
+	}
+}
+
+// Languages.
+const (
+	English Language = iota
+	French
+	Swedish
+	Czech
+	German
+	Spanish
+	Italian
+
+	// Aliases
+	Slovac     = Czech
+	Portuguese = Spanish
+)
+
+// Coding is the page coding.
+type Coding uint8
+
+// Codings
+const (
+	Coding7BitText Coding = iota
+	Coding8BitData
+	Coding13Triplets
+	CodingHamming8_4
+)
+
+// Function is the page function.
+type Function uint8
+
+// Functions
+const (
+	LOP Function = iota
+	DATABROADCAST
+	GPOP
+	POP
+	GDRCS
+	DRCS
+	MOT
+	MIP
+	BTT
+	AIT
+	MPT
+	MPTEX
+)

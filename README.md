@@ -30,6 +30,9 @@ Parser for ANSi formats:
   * Amiga ASCII
   * IBM PC ANSi (various Codepages supported)
 
+Links:  
+  * [API documentation](https://godoc.org/github.com/textmodes/parser/text/ansi)
+
 #### [TeleText](text/teletext)
 
 Parser for TeleText Level 1 formats:

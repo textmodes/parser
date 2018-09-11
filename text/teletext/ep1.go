@@ -54,7 +54,7 @@ func DecodeEP1(r io.Reader) (Pages, error) {
 			if _, err = io.ReadFull(r, buf[:]); err != nil {
 				return nil, err
 			}
-			page.SetRow(row, buf[:])
+			page.SetLineBytes(int(row), buf[:])
 		}
 
 		// Read suffix
