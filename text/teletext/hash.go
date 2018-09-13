@@ -3,10 +3,8 @@ package teletext
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/hex"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 )
 
@@ -41,8 +39,8 @@ func DecodeHash(hash string) (*Page, error) {
 	// Decode 7-bit data to 8-bit data
 	dst8 := make([]byte, (len(dst7)/7)*8)
 	decode7bits(dst8, dst7)
-	log.Printf("hash decode:\n%s", hex.Dump(dst8))
-	log.Printf("hash decoded to %d (%d lines)", len(dst8), len(dst8)/40)
+	// log.Printf("hash decode:\n%s", hex.Dump(dst8))
+	// log.Printf("hash decoded to %d (%d lines)", len(dst8), len(dst8)/40)
 
 	page := NewPage()
 	for row, rows := 0, len(dst8)/40; row < rows; row++ {

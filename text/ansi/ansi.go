@@ -1,11 +1,5 @@
 package ansi
 
-import "log"
-
-func debugf(format string, v ...interface{}) {
-	log.Printf("ansi: "+format, v...)
-}
-
 func isdigit(b byte) bool {
 	return b >= '0' && b <= '9'
 }

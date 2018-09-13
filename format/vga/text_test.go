@@ -1,9 +1,12 @@
 package vga
 
-import "testing"
+import (
+	"image"
+	"testing"
+)
 
 func TestText(t *testing.T) {
-	text := new(Text)
+	text := NewText(5, 5)
 	text.Resize(4, 4)
 	if w, h := text.Width(), text.Height(); w != 4 || h != 4 {
 		t.Fatalf("expected 4x4, got %dx%d", w, h)
@@ -11,7 +14,7 @@ func TestText(t *testing.T) {
 }
 
 func TestTextResize(t *testing.T) {
-	text := new(Text)
+	text := NewText(5, 5)
 	text.Resize(4, 4)
 	if w, h := text.Width(), text.Height(); w != 4 || h != 4 {
 		t.Fatalf("expected 4x4, got %dx%d", w, h)
@@ -50,8 +53,47 @@ func TestTextResize(t *testing.T) {
 	})
 }
 
+func TestTextCrop(t *testing.T) {
+	text := NewText(5, 5)
+	text.WriteString("abcde")
+	text.WriteString("fghij")
+	text.WriteString("klmno")
+	text.WriteString("pqrst")
+	text.WriteString("uvwxy")
+
+	t.Run("CropSameWidth", func(t *testing.T) {
+		/*
+			abcde
+			fghij    fghij
+			klmno -> klmno
+			pqrst    pqrst
+			uvwxy
+		*/
+		crop := text.Crop(image.Rect(0, 1, 5, 4))
+		want := "fghij\nklmno\npqrst\n"
+		if got := crop.String(); got != want {
+			t.Fatalf("expected %q, got %q", want, got)
+		}
+	})
+
+	t.Run("CropDifferentWidth", func(t *testing.T) {
+		/*
+			abcde
+			fghij     ghi
+			klmno ->  lmn
+			pqrst     qrs
+			uvwxy
+		*/
+		crop := text.Crop(image.Rect(1, 1, 4, 4))
+		want := "ghi\nlmn\nqrs\n"
+		if got := crop.String(); got != want {
+			t.Fatalf("expected %q, got %q", want, got)
+		}
+	})
+}
+
 func TestTextScroll(t *testing.T) {
-	text := new(Text)
+	text := NewText(5, 5)
 	text.Resize(4, 4)
 	if w, h := text.Width(), text.Height(); w != 4 || h != 4 {
 		t.Fatalf("expected 4x4, got %dx%d", w, h)
@@ -122,30 +164,6 @@ func TestTextWrites(t *testing.T) {
 			text.WriteCharacter('a' + byte(i))
 		}
 		want := "ijkl\nmnop\nqrst\nuvwx\n"
-		if got := text.String(); got != want {
-			t.Fatalf("expected %q, got %q", want, got)
-		}
-	})
-
-	t.Run("WriteRune, no scroll, no auto expand", func(t *testing.T) {
-		text := NewText(4, 4)
-		//text.DisableScrolling = true
-		for i := 0; i < 4*5; i++ {
-			text.WriteCharacter('a' + byte(i))
-		}
-		want := "abcd\nefgh\nijkl\nmnop\n"
-		if got := text.String(); got != want {
-			t.Fatalf("expected %q, got %q", want, got)
-		}
-	})
-
-	t.Run("WriteRune, scroll, auto expand", func(t *testing.T) {
-		text := NewText(4, 4)
-		text.AutoExpand = true
-		for i := 0; i < 4*5; i++ {
-			text.WriteCharacter('a' + byte(i))
-		}
-		want := "abcd\nefgh\nijkl\nmnop\nqrst\n"
 		if got := text.String(); got != want {
 			t.Fatalf("expected %q, got %q", want, got)
 		}

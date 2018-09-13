@@ -1,9 +1,27 @@
 package vga
 
-import "image/color"
+import (
+	"fmt"
+	"image/color"
+)
 
 // RGB is a 24-bit RGB triplet.
 type RGB uint32
+
+// NewRGB returns a 24-bit RGB triplet.
+func NewRGB(r, g, b uint8) RGB {
+	return RGB(uint32(r)<<16 | uint32(g)<<8 | uint32(b))
+}
+
+// ToRGB converts a color to RGB.
+func ToRGB(c color.Color) RGB {
+	if c, ok := c.(RGB); ok {
+		return c
+	}
+
+	r, g, b, _ := c.RGBA()
+	return NewRGB(uint8(r>>8), uint8(g>>8), uint8(b>>8))
+}
 
 // RGBA returns the 16-bit RGBA values for the color.
 func (rgb RGB) RGBA() (r, g, b, a uint32) {
@@ -15,6 +33,13 @@ func (rgb RGB) RGBA() (r, g, b, a uint32) {
 	b |= b << 8
 	a = 0xffff
 	return
+}
+
+func (rgb RGB) String() string {
+	return fmt.Sprintf("#%02x%02x%02x",
+		uint8((rgb&0xff0000)>>16),
+		uint8((rgb&0x00ff00)>>8),
+		uint8((rgb&0x0000ff)>>0))
 }
 
 // Color names for the first 16 colors.
@@ -43,7 +68,7 @@ var (
 	Grey        = White
 )
 
-// Pallete is the standard 256-color VGA palette.
+// Palette is the standard 256-color VGA palette.
 var Palette = color.Palette{
 	// CGA or Color Graphics Adapter palette
 	Black,
@@ -64,24 +89,22 @@ var Palette = color.Palette{
 	BrightWhite,
 }
 
+// ColorIndex returns the index in the palette.
+func ColorIndex(c color.Color, p color.Palette) int {
+	for i, o := range p {
+		if colorEqual(c, o) {
+			return i
+		}
+	}
+	return -1
+}
+
 func colorEqual(a, b color.Color) bool {
 	var (
 		ar, ag, ab, aa = a.RGBA()
 		br, bg, bb, ba = b.RGBA()
 	)
 	return ar == br && ag == bg && ab == bb && aa == ba
-}
-
-func paletteGetOrCreate(palette color.Palette, c color.Color) uint {
-	for i, other := range palette {
-		if colorEqual(other, c) {
-			return uint(i)
-		}
-	}
-
-	i := uint(len(palette))
-	palette = append(palette, c)
-	return i
 }
 
 func init() {

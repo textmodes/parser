@@ -2,13 +2,15 @@ package teletext
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
-	"log"
+	"image/gif"
 	"time"
 
+	"github.com/textmodes/parser"
 	"github.com/textmodes/parser/chargen"
 	"github.com/textmodes/parser/data"
 )
@@ -199,9 +201,9 @@ const (
 	separatedGraphics
 )
 
-func (page Page) render(flashing bool, now time.Time) (image.Image, error) {
+func (page Page) render(flashing bool, now time.Time) (*image.Paletted, error) {
 	var (
-		im                 = image.NewRGBA(image.Rect(0, 0, 40*12, 25*20))
+		im                 = image.NewPaletted(image.Rect(0, 0, 40*12, 25*20), palette)
 		rom, err           = data.Bytes(fmt.Sprintf("font/chargen/saa505%d.bin", page.Language))
 		doubleHeightBottom bool
 		nextCharType       charType
@@ -211,8 +213,9 @@ func (page Page) render(flashing bool, now time.Time) (image.Image, error) {
 	}
 	draw.Draw(im, im.Bounds(), image.NewUniform(palette[0]), image.ZP, draw.Src)
 	var (
-		opts = chargen.MaskOptions{Size: image.Pt(8, 10), Scale: 1, Smoothing: true}
-		mask = chargen.NewBytesMask(rom, opts)
+		opts = chargen.MaskOptions{Size: image.Pt(8, 10)}
+		mask = chargen.RoundCharacters(chargen.NewBytesMask(rom, opts))
+		//mask = chargen.NewBytesMask(rom, opts)
 		font = chargen.New(mask)
 	)
 	for row := 0; row < 25; row++ {
@@ -230,11 +233,10 @@ func (page Page) render(flashing bool, now time.Time) (image.Image, error) {
 			fg               = palette[7]
 			bg               = palette[0]
 			graphicsLast     uint8
-			debug            = row == 1
 		)
 		nextCharType = alphanumeric
 		heldCharType = alphanumeric
-		log.Printf("line %d: %q", row, page.LineAt(row, now))
+		debugf("line %d: %q", row, page.LineAt(row, now))
 		for col, code := range page.LineAt(row, now) {
 			var (
 				ctrl              = code & 0x7f // 7-bit
@@ -242,9 +244,7 @@ func (page Page) render(flashing bool, now time.Time) (image.Image, error) {
 				graphicsHoldClear bool
 				currCharType      = nextCharType
 			)
-			if debug {
-				log.Printf("(%d, %d) code %#02x (%s, %#02x)", col, row, code, codeName(code), ctrl)
-			}
+			tracef("(%d, %d) code %#02x (%s, %#02x)", col, row, code, codeName(code), ctrl)
 			if ctrl < 0x20 {
 				switch ctrl {
 				case
@@ -264,20 +264,14 @@ func (page Page) render(flashing bool, now time.Time) (image.Image, error) {
 					}
 					graphics = false
 					graphicsHoldClear = true
-					if debug {
-						log.Printf("(%d, %d) alpha, fg %+v", col, row, fg)
-					}
+					tracef("(%d, %d) alpha, fg %+v", col, row, fg)
 					nextCharType = alphanumeric
 				case controlFlash:
 					flash = true
-					if debug {
-						log.Printf("(%d, %d) flash on", col, row)
-					}
+					tracef("(%d, %d) flash on", col, row)
 				case controlSteady:
 					flash = false
-					if debug {
-						log.Printf("(%d, %d) flash off", col, row)
-					}
+					tracef("(%d, %d) flash off", col, row)
 				case controlEndBox, controlStartBox:
 				case controlNormalHeight:
 					doubleHeight = false
@@ -325,14 +319,10 @@ func (page Page) render(flashing bool, now time.Time) (image.Image, error) {
 					} else {
 						nextCharType = contiguousGraphics
 					}
-					if debug {
-						log.Printf("(%d, %d) graphics, fg %+v", col, row, fg)
-					}
+					tracef("(%d, %d) graphics, fg %+v", col, row, fg)
 				case controlConcealDisplay:
 					fg = bg
-					if debug {
-						log.Printf("(%d, %d) conceal, fg %+v", col, row, fg)
-					}
+					tracef("(%d, %d) conceal, fg %+v", col, row, fg)
 				case controlContiguousMosaic:
 					separated = false
 					nextCharType = contiguousGraphics
@@ -342,14 +332,10 @@ func (page Page) render(flashing bool, now time.Time) (image.Image, error) {
 				case controlESC:
 				case controlBlackBackground:
 					bg = palette[0]
-					if debug {
-						log.Printf("(%d, %d) black background, bg %+v", col, row, bg)
-					}
+					tracef("(%d, %d) black background, bg %+v", col, row, bg)
 				case controlNewBackground:
 					bg = fg
-					if debug {
-						log.Printf("(%d, %d) new background, bg %+v", col, row, bg)
-					}
+					tracef("(%d, %d) new background, bg %+v", col, row, bg)
 				case controlHoldMosaic:
 					graphicsHold = true
 				case controlReleaseMosaic:
@@ -357,7 +343,7 @@ func (page Page) render(flashing bool, now time.Time) (image.Image, error) {
 				}
 
 				if graphics && graphicsHold {
-					log.Printf("graphics held: %q -> %q", code, graphicsLast)
+					tracef("graphics held: %q -> %q", code, graphicsLast)
 					code = graphicsLast
 					if code >= 0x40 && code < 0x60 {
 						code = 0x20
@@ -385,7 +371,7 @@ func (page Page) render(flashing bool, now time.Time) (image.Image, error) {
 
 			// Only display char if we're *not* flashing
 			if flash && !flashing {
-				log.Printf("flash but not flashing: %q -> %q", code, graphicsLast)
+				tracef("flash but not flashing: %q -> %q", code, graphicsLast)
 				code = ' '
 			}
 
@@ -402,20 +388,14 @@ func (page Page) render(flashing bool, now time.Time) (image.Image, error) {
 
 			if !skip {
 				if graphics {
-					if debug {
-						log.Printf("(%d, %d) graphics %#02x", col, row, code)
-					}
+					tracef("(%d, %d) graphics %#02x", col, row, code)
 					page.renderMosaic(im, font, col, row, fg, bg, code, separated, doubleHeight, doubleWidth)
 				} else {
-					if debug {
-						log.Printf("(%d, %d) alpha %q (%d) color %v on %v", col, row, code&0x7f, code, fg, bg)
-					}
+					tracef("(%d, %d) alpha %q (%d) color %v on %v", col, row, code&0x7f, code, fg, bg)
 					page.renderChar(im, font, col, row, fg, bg, code, doubleHeight, doubleWidth)
 				}
 			} else {
-				if debug {
-					log.Printf("(%d, %d) skip", col, row)
-				}
+				tracef("(%d, %d) skip", col, row)
 			}
 			doubleWidthRight = doubleWidthNext
 		}
@@ -425,7 +405,7 @@ func (page Page) render(flashing bool, now time.Time) (image.Image, error) {
 	return im, nil
 }
 
-func (page Page) renderChar(im *image.RGBA, font *chargen.Font, col, row int, fg, bg color.Color, code byte, doubleHeight, doubleWidth bool) {
+func (page Page) renderChar(im *image.Paletted, font *chargen.Font, col, row int, fg, bg color.Color, code byte, doubleHeight, doubleWidth bool) {
 	var (
 		char = code & 0x7f // 7-bit
 		w    = 12
@@ -447,14 +427,11 @@ func (page Page) renderChar(im *image.RGBA, font *chargen.Font, col, row int, fg
 		sp = sp.Add(image.Pt(4, 0)) // First two columns are empty in the font ROM
 		draw.DrawMask(im, im.Bounds().Add(image.Pt(x, y)), image.NewUniform(fg), image.ZP, mask, sp, draw.Over)
 	} else {
-		log.Printf("can't render char %q (%#02x)", char, char)
+		debugf("can't render char %q (%#02x)", char, char)
 	}
 }
 
-func (page Page) renderMosaic(im *image.RGBA, font *chargen.Font, col, row int, fg, bg color.Color, code byte, separated, doubleHeight, doubleWidth bool) {
-	if row < 3 {
-		log.Printf("mosaic %#02x %08b", code, code)
-	}
+func (page Page) renderMosaic(im *image.Paletted, font *chargen.Font, col, row int, fg, bg color.Color, code byte, separated, doubleHeight, doubleWidth bool) {
 	var (
 		char = code - 0x20
 		w    = 12
@@ -532,7 +509,7 @@ func (page Page) renderMosaicChar(im *image.RGBA, font *chargen.Font, col, row i
 	)
 	draw.Draw(im, image.Rect(x, y, x+w, y+h), image.NewUniform(bg), image.ZP, draw.Src)
 	if char >= 0x20 {
-		log.Printf("mosaic (%d, %d) %d: %08b -> %08b", col, row, code, code, code-0x20)
+		tracef("mosaic (%d, %d) %d: %08b -> %08b", col, row, code, code, code-0x20)
 		mask, sp := font.CharMask(uint16(char-0x20) & 0x3f)
 		sp = sp.Add(image.Pt(4, 0)) // First two columns are empty in the font ROM
 		draw.DrawMask(im, im.Bounds().Add(image.Pt(x, y)), image.NewUniform(fg), image.ZP, mask, sp, draw.Over)
@@ -609,7 +586,31 @@ func (page Page) generateMosaic(data uint8, row int, separated, doubleHeight, do
 	return
 }
 
+// Pages are multiple pages.
 type Pages []*Page
+
+func (pages Pages) Image() (image.Image, error) {
+	if len(pages) == 0 {
+		return nil, errors.New("teletext: no pages")
+	}
+	return pages[0].Image()
+}
+
+func (pages Pages) AnimateDelay(delay time.Duration) (*gif.GIF, error) {
+	var (
+		g = new(gif.GIF)
+		d = int(delay / (time.Millisecond * 100))
+	)
+	for _, page := range pages {
+		i, err := page.Image()
+		if err != nil {
+			return nil, err
+		}
+		g.Image = append(g.Image, i.(*image.Paletted))
+		g.Delay = append(g.Delay, d)
+	}
+	return g, nil
+}
 
 // Language code.
 type Language int
@@ -678,4 +679,10 @@ const (
 	AIT
 	MPT
 	MPTEX
+)
+
+// Interface checks
+var (
+	_ parser.Image = (*Page)(nil)
+	_ parser.Image = (*Pages)(nil)
 )

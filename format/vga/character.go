@@ -1,10 +1,13 @@
 package vga
 
-import "image/color"
+import (
+	"image/color"
+	"strings"
+)
 
 // BlankCharacter is a space with black background and white foreground and no
 // attributes set.
-const BlankCharacter = Character(0x000000aaaaaa0020)
+var BlankCharacter = MakeCharacter(' ', RGB(0xaaaaaa), RGB(0x000000))
 
 const (
 	bgMask   = 0xffffff0000000000
@@ -16,6 +19,44 @@ const (
 // Attribute for Character memory.
 type Attribute uint8
 
+func (attr Attribute) String() string {
+	var s []string
+	for _, a := range []Attribute{
+		Bold,
+		Faint,
+		Standout,
+		Underline,
+		Blink,
+		Reverse,
+		Conceal,
+	} {
+		if attr&a == a {
+			switch a {
+			case Bold:
+				s = append(s, "bold")
+			case Faint:
+				s = append(s, "faint")
+			case Standout:
+				s = append(s, "standout")
+			case Underline:
+				s = append(s, "underline")
+			case Blink:
+				s = append(s, "blink")
+			case CrossedOut:
+				s = append(s, "crossed out")
+			case Reverse:
+				s = append(s, "reverse")
+			case Conceal:
+				s = append(s, "conceal")
+			}
+		}
+	}
+	if len(s) == 0 {
+		return "<none>"
+	}
+	return strings.Join(s, ",")
+}
+
 // Attributes
 const (
 	Bold Attribute = 1 << iota
@@ -23,7 +64,7 @@ const (
 	Standout
 	Underline
 	Blink
-	_
+	CrossedOut
 	Reverse
 	Conceal
 	Invisible = Conceal
@@ -46,7 +87,7 @@ support 24-bit colors and extended attributes. The layout is as follows:
 						 S = standout
 						 U = underline
 						 X = blink
-						 _ = unused
+						 _ = crossed out
 						 R = reverse
 						 C = conceal
 	fore:      foreground color (24-bit RGB)
@@ -62,48 +103,65 @@ func MakeCharacter(cp uint8, fg, bg color.Color) Character {
 	return char
 }
 
+// Reset the character to space with selected colors.
 func (char *Character) Reset(fg, bg color.Color) {
 	*char = Character(' ') | color24Bit(fg)<<16 | color24Bit(bg)<<40
 }
 
+// BackgroundColor returns the current background color.
 func (char Character) BackgroundColor() color.Color {
 	return RGB((char & bgMask) >> 40)
 }
 
+// SetBackgroundColor updates the background color.
 func (char *Character) SetBackgroundColor(c color.Color) {
 	*char &= ^Character(bgMask) // clear
 	*char |= color24Bit(c) << 40
 }
 
+// ForegroundColor returns the current foreground color.
 func (char Character) ForegroundColor() color.Color {
 	return RGB((char & fgMask) >> 16)
 }
 
+// SetForegroundColor updates the foreground color.
 func (char *Character) SetForegroundColor(c color.Color) {
 	*char &= ^Character(fgMask) // clear
 	*char |= color24Bit(c) << 16
 }
 
+// Attributes returns all attributes.
 func (char Character) Attributes() Attribute {
 	return Attribute((char & attrMask) >> 8)
 }
 
+// ClearAttributes clears all attributes.
 func (char *Character) ClearAttributes() {
 	*char &= ^Character(attrMask)
 }
 
+// ClearAttribute clears attribute a.
 func (char *Character) ClearAttribute(a Attribute) {
 	*char &= ^Character(a) << 8
 }
 
+// SetAttribute sets attribute a.
 func (char *Character) SetAttribute(a Attribute) {
 	*char |= Character(a) << 8
 }
 
+// SetAttributes updates all attributes with value a.
+func (char *Character) SetAttributes(a Attribute) {
+	*char &= ^Character(attrMask)
+	*char |= Character(a) << 8
+}
+
+// CodePoint of the character.
 func (char Character) CodePoint() uint8 {
 	return uint8(char)
 }
 
+// SetCodePoint updates the code point of the character.
 func (char *Character) SetCodePoint(v uint8) {
 	*char = (*char & 0xff00) | Character(v)
 }

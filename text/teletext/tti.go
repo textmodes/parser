@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -129,7 +128,7 @@ parsing:
 			}
 			var line [40]byte
 			copy(line[:], bytes.TrimRight([]byte(args[i+1:]), "\r\n"))
-			log.Printf("set row %d: %q", row, line)
+			debugf("set row %d: %q", row, line)
 			page.SetLine(row, line)
 			//page.SetLineBytes(row, []byte(args[i+1:]))
 

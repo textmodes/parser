@@ -10,9 +10,11 @@ import (
 
 // Font can draw characters from a Mask.
 type Font struct {
-	mask       Mask
-	characters uint16
-	size       image.Point
+	// Mask of the font.
+	Mask Mask
+
+	// Size of each character in the mask.
+	Size image.Point
 }
 
 // New Font from an image, where the width of the font must be specified and
@@ -20,38 +22,31 @@ type Font struct {
 func New(mask Mask) *Font {
 	//log.Printf("chargen.New(%#v)", mask)
 	return &Font{
-		mask:       mask,
-		characters: mask.Characters(),
-		size:       mask.CharacterSize(),
+		Mask: mask,
+		Size: mask.CharacterSize(),
 	}
 }
 
 // CharMask returns a mask and a source point for the requested char.
 func (font Font) CharMask(char uint16) (Mask, image.Point) {
-	if char >= font.characters {
+	if char >= font.Mask.Characters() {
 		return nil, image.Point{}
 	}
 	var (
-		offs = font.size.X * int(char)
-		rect = image.Rect(offs, 0, offs+font.size.X, font.size.Y)
-		mask = font.mask.SubMask(rect)
+		offs = font.Size.X * int(char)
+		rect = image.Rect(offs, 0, offs+font.Size.X, font.Size.Y)
+		mask = font.Mask.SubMask(rect)
 	)
 	return mask, rect.Min
 }
 
 // Draw a character from the font onto dst with mask applied to src.
 func (font Font) Draw(dst draw.Image, p image.Point, src image.Image, char uint16) {
-	// fast path
-	if char >= font.characters {
+	if char >= font.Mask.Characters() {
+		// fast path
 		return
 	}
-	/*
-		var (
-			offs = font.size.X * int(char)
-			rect = image.Rect(offs, 0, offs+font.size.X, font.size.Y)
-			mask = font.mask.SubMask(rect)
-		)
-	*/
+
 	mask, sp := font.CharMask(char)
 	draw.DrawMask(dst, dst.Bounds().Add(p), src, image.ZP, mask, sp, draw.Over)
 }
@@ -60,20 +55,13 @@ func (font Font) Draw(dst draw.Image, p image.Point, src image.Image, char uint1
 // applied to src. The string is interpreted as 8-bit values (bytes).
 func (font Font) DrawString(dst draw.Image, p image.Point, src image.Image, s string) {
 	for _, char := range []byte(s) {
-		// fast path
-		if uint16(char) >= font.characters {
-			return
+		if uint16(char) >= font.Mask.Characters() {
+			// fast path
+			continue
 		}
 
-		/*
-			var (
-				offs = font.size.X * int(char)
-				rect = image.Rect(offs, 0, offs+font.size.X, font.size.Y)
-				mask = font.mask.SubMask(rect)
-			)
-		*/
 		mask, sp := font.CharMask(uint16(char))
 		draw.DrawMask(dst, dst.Bounds().Add(p), src, image.ZP, mask, sp, draw.Over)
-		p.X += int(font.size.X)
+		p.X += int(font.Size.X)
 	}
 }

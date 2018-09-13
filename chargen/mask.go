@@ -3,12 +3,13 @@ package chargen
 import (
 	"image"
 	"image/color"
+	"log"
 )
 
 // Bitmap mask alpha colors.
 var (
-	Opaque      = color.Alpha{A: 0xff}
-	Transparent = color.Alpha{A: 0x00}
+	Opaque      = &color.Alpha{A: 0xff}
+	Transparent = &color.Alpha{A: 0x00}
 )
 
 /*
@@ -55,12 +56,6 @@ type MaskOptions struct {
 	// StrideX is the amount of bits to advance for each character scan line. If
 	// left empty, it defaults to the character width.
 	StrideX int
-
-	// Scale factor.
-	Scale uint
-
-	// Smoothing for scaling up.
-	Smoothing bool
 }
 
 // Mask for a chargen font; each character is laid out horizontally in the
@@ -154,6 +149,7 @@ func NewBytesMask(data []byte, opts MaskOptions) Mask {
 
 func (mask *bitmap) Characters() uint16 {
 	if mask == nil {
+		log.Println("chargen: Characters() on nil map!")
 		return 0
 	}
 	return mask.characters
@@ -161,17 +157,15 @@ func (mask *bitmap) Characters() uint16 {
 
 func (mask *bitmap) CharacterSize() image.Point {
 	if mask == nil {
+		log.Println("chargen: CharacterSize() on nil map!")
 		return image.Point{}
 	}
-	if mask.opts.Scale == 0 {
-		return mask.opts.Size
-	}
-	return image.Pt(mask.opts.Size.X<<mask.opts.Scale, mask.opts.Size.Y<<mask.opts.Scale)
+	return mask.opts.Size
 }
 
 // At returns the alpha mask of the pixel at (x, y).
 func (mask *bitmap) At(x, y int) color.Color {
-	if mask == nil {
+	if mask == nil || x < 0 || y < 0 {
 		return Transparent
 	}
 	/*
@@ -231,109 +225,6 @@ func (mask *bitmap) At(x, y int) color.Color {
 				buffer[offset] = GGHHHHHH
 				                       ^ bit 2
 	*/
-	if mask.opts.Scale == 1 && mask.opts.Smoothing {
-		/*
-
-			Font smoothing goes like this, imagine a diagonal line in the original
-			like such:
-
-				+--+--+							+--+--+							+--+--+
-				|  |##|             |##|  |             |##|  |
-				+--+--+             +--+--+             +--+--+
-			  |##|  |             |  |##|             |##|##|
-				+--+--+             +--+--+             +--+--+
-
-			Scaling this up without smoothing, would result in:
-
-				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
-				|  |  |##|##|       |##|##|  |  |       |##|##|  |  |
-				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
-				|  |  |##|##|       |##|##|  |  |       |##|##|  |  |
-				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
-				|##|##|  |  |       |  |  |##|##|       |##|##|##|##|
-				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
-				|##|##|  |  |       |  |  |##|##|       |##|##|##|##|
-				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
-
-			With smoothing enabled (notice the last block does *not* smooth):
-
-				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
-				|  |  |##|##|       |##|##|  |  |       |##|##|  |  |
-				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
-				|  |##|##|##|       |##|##|##|  |       |##|##|  |  |
-				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
-				|##|##|##|  |       |  |##|##|##|       |##|##|##|##|
-				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
-				|##|##|  |  |       |  |  |##|##|       |##|##|##|##|
-				+--+--+--+--+       +--+--+--+--+       +--+--+--+--+
-
-			Half dot is inserted before or after a whole dot in the presence of
-			a diagonal in the matrix.
-
-		*/
-		var (
-			/*
-				+--+--+--+
-				|nw|n |ne|
-				+--+--+--+
-				|w |xy|e |
-				+--+--+--+
-				|sw|s |se|
-				+--+--+--+
-			*/
-			sx, sy = x >> 1, y >> 1
-			n      = mask.bit(sx+0, sy-1)
-			nw     = mask.bit(sx-1, sy-1)
-			ne     = mask.bit(sx+1, sy-1)
-			w      = mask.bit(sx-1, sy+0)
-			xy     = mask.bit(sx+0, sy+0)
-			e      = mask.bit(sx+1, sy+0)
-			sw     = mask.bit(sx-1, sy+1)
-			s      = mask.bit(sx+0, sy+1)
-			se     = mask.bit(sx+1, sy+1)
-		)
-		if xy {
-			return Opaque
-		}
-		switch x & 0x01 {
-		case 0x00:
-			switch y & 0x01 {
-			case 0x00: // upper left
-				if !nw && n && w {
-					return Opaque
-				}
-			case 0x01: // lower left
-				if !sw && s && w {
-					return Opaque
-				}
-			}
-		case 0x01:
-			switch y & 0x01 {
-			case 0x00: // upper right
-				if !ne && n && e {
-					return Opaque
-				}
-			case 0x01: // lower right
-				if !se && s && e {
-					return Opaque
-				}
-			}
-		}
-		/*
-			var (
-				w, e = mask.bit(sx-1, sy), mask.bit(sx+1, y)
-				n, s = mask.bit(sx, sy-1), mask.bit(sx, sy+1)
-			)
-			if (w && e && n) || (e && n && s) || (n && s && w) || (s && w && e) {
-				return Opaque
-			}
-		*/
-		return Transparent
-	} else if mask.opts.Scale > 0 {
-		// Scale down coordinates according to scale rules.
-		x >>= mask.opts.Scale
-		y >>= mask.opts.Scale
-	}
 	var (
 		bpp   = mask.opts.StrideX * mask.opts.Size.Y
 		char  = x / mask.opts.StrideX
@@ -342,7 +233,7 @@ func (mask *bitmap) At(x, y int) color.Color {
 		buf   = bits >> 3
 		bit   = uint(7 - (bits % 8))
 	)
-	if mask.data[buf]&(1<<bit) == 0 {
+	if buf >= len(mask.data) || mask.data[buf]&(1<<bit) == 0 {
 		return Transparent
 	}
 	return Opaque
@@ -371,15 +262,7 @@ func (mask *bitmap) Bounds() image.Rectangle {
 	if mask == nil {
 		return image.Rectangle{}
 	}
-	if mask.opts.Scale == 0 {
-		return mask.bounds
-	}
-	return image.Rect(
-		mask.bounds.Min.X<<mask.opts.Scale,
-		mask.bounds.Min.Y<<mask.opts.Scale,
-		mask.bounds.Max.X<<mask.opts.Scale,
-		mask.bounds.Max.Y<<mask.opts.Scale,
-	)
+	return mask.bounds
 }
 
 // ColorModel returns color.AlphaModel (8-bit alpha values).
@@ -393,20 +276,14 @@ func (mask *bitmap) SubMask(r image.Rectangle) Mask {
 	if mask == nil {
 		return nil
 	}
-	if mask.opts.Scale > 0 {
-		r.Min.X >>= mask.opts.Scale
-		r.Min.Y >>= mask.opts.Scale
-		r.Max.X >>= mask.opts.Scale
-		r.Max.Y >>= mask.opts.Scale
-	}
-	r = r.Intersect(mask.bounds)
-	if r.Empty() {
+	i := r.Intersect(mask.bounds)
+	if i.Empty() {
 		return nil
 	}
 	return &bitmap{
 		opts:       mask.opts,
 		data:       mask.data,
-		bounds:     r,
+		bounds:     i,
 		characters: mask.characters,
 		stride:     mask.stride,
 	}

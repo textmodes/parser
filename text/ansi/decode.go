@@ -2,16 +2,24 @@ package ansi
 
 import (
 	"bufio"
+	"bytes"
 	"image/color"
 	"io"
-	"log"
 
+	"github.com/textmodes/parser"
+	"github.com/textmodes/parser/chargen"
 	"github.com/textmodes/parser/format/vga"
 )
 
 // Decoder for ANSI files.
 type Decoder struct {
 	*vga.Text
+
+	// Font for Image() and Scroller()
+	Font *chargen.Font
+
+	// progressFunc will be called when generating a Scoller.
+	progressFunc func(float64)
 }
 
 // NewDecoder returns a decoder with a 80x25 VGA text buffer.
@@ -35,15 +43,21 @@ func (decoder *Decoder) Decode(r io.Reader) error {
 			}
 			return err
 		}
+		tracef("read: %q", b)
 		switch b {
-		case '\b':
+		case BS:
 			decoder.backspace()
 		case TAB:
-			decoder.Move(0, 8)
+			/*
+				x, _ := decoder.Position()
+				decoder.Move(int(8-(x%8)), 0)
+			*/
+			//decoder.Move(8, 0)
+			decoder.WriteString("        ")
 		case LF: // Line feed
-			//_, y := decoder.Position()
-			//decoder.Goto(0, y+1)
-			decoder.Move(0, 1)
+			_, y := decoder.Position()
+			decoder.Goto(0, y+1)
+			//decoder.Move(0, 1)
 		case VT: // Vertical tab
 			debugf("not implemented: vertical tab")
 		case FF: // Form feed
@@ -59,20 +73,34 @@ func (decoder *Decoder) Decode(r io.Reader) error {
 			} else if err = br.UnreadByte(); err != nil {
 				return err
 			}
-		case SUB: // Sub
-			return nil
+		case SUB: // Sub, end if next up is a SAUCE record
+			var peek []byte
+			if peek, err = br.Peek(7); err != nil {
+				if err != io.EOF {
+					return err
+				}
+			}
+			if bytes.Equal(peek, []byte("SAUCE00")) {
+				// SAUCE record next, done parsing
+				return nil
+			}
+			tracef("SUB peek: %q (%d)", peek, len(peek))
+			decoder.WriteCharacter(b)
 		case ESC: // Escape
 			if err = decoder.processEscape(br); err != nil {
 				return err
 			}
 		default:
+			tracef("char %q", b)
 			decoder.WriteCharacter(b)
 		}
 	}
 }
 
 func (decoder *Decoder) backspace() {
-
+	decoder.Move(-1, 0)
+	decoder.WriteCharacter(' ')
+	decoder.Move(-1, 0)
 }
 
 func (decoder *Decoder) tab(n int) {
@@ -94,6 +122,19 @@ func (decoder *Decoder) processEscape(r *bufio.Reader) (err error) {
 	}
 	debugf("process <ESC>%c", b)
 	switch b {
+	case // Escaped control code
+		BS,
+		TAB,
+		LF,
+		VT,
+		FF,
+		CR,
+		SO,
+		SI,
+		SUB,
+		ESC:
+		decoder.WriteCharacter(b)
+		return
 	case '7': // Save Cursor (VT100)
 		decoder.SaveCursor()
 	case '8': // Restore Cursor (VT100)
@@ -171,11 +212,13 @@ func (decoder *Decoder) processCSISequence(r *bufio.Reader) (err error) {
 	if b, err = r.ReadByte(); err != nil {
 		return
 	}
+	tracef("read: %q", b)
 	if b >= '<' && b <= '?' {
 		p = b
 		if b, err = r.ReadByte(); err != nil {
 			return
 		}
+		tracef("read: %q", b)
 	}
 
 	// Read numeric sequence
@@ -190,7 +233,7 @@ func (decoder *Decoder) processCSISequence(r *bufio.Reader) (err error) {
 			if b, err = r.ReadByte(); err != nil {
 				return
 			}
-			log.Printf("read: %c", b)
+			tracef("read: %q", b)
 		}
 		if len(args) < cap(args) {
 			args = append(args, n)
@@ -209,6 +252,7 @@ func (decoder *Decoder) processCSISequence(r *bufio.Reader) (err error) {
 			if b, err = r.ReadByte(); err != nil {
 				return
 			}
+			tracef("read: %q", b)
 		}
 	}
 
@@ -220,9 +264,9 @@ func (decoder *Decoder) processCSISequence(r *bufio.Reader) (err error) {
 
 	switch b {
 	case 'A', 'e': // Cursor Up
-		decoder.Move(0, -(defaultInt(args, 1) - 1))
+		decoder.Move(0, -defaultInt(args, 1))
 	case 'B': // Cursor Down
-		decoder.Move(0, +(defaultInt(args, 1) - 1))
+		decoder.Move(0, +defaultInt(args, 1))
 	case 'C', 'a': // Cursor Right
 		if len(args) < 1 || args[0] == 0 {
 			decoder.Move(1, 0)
@@ -266,6 +310,8 @@ func (decoder *Decoder) processCSISequence(r *bufio.Reader) (err error) {
 		decoder.eraseLine(defaultInt(args, 0))
 	case 'm':
 		decoder.processSGRMode(args)
+	case 't':
+		decoder.processCustomMode(args)
 	case 'r': // Set Scrolling Region [top;bottom] (default = full size of window)
 		if p == '?' {
 			if len(args) < 2 || args[0] >= args[1] {
@@ -285,6 +331,8 @@ func (decoder *Decoder) processCSISequence(r *bufio.Reader) (err error) {
 		case 2: // <ESC>[0g Clear Current Column Tabs
 		case 3: // <ESC>[3g or Clear All Tabs
 		}
+	default:
+		tracef("unknown CSI sequence ESC[...%c", b)
 	}
 	return
 }
@@ -297,7 +345,7 @@ func (decoder *Decoder) processSGRMode(args []int) {
 	for i, l := 0, len(args); i < l; i++ {
 		switch args[i] {
 		case 0: // reset
-			decoder.ClearAttributes()
+			decoder.ResetAttributes()
 		case 1: // bold
 			decoder.SetAttribute(vga.Bold)
 		case 2: // faint
@@ -306,22 +354,28 @@ func (decoder *Decoder) processSGRMode(args []int) {
 			decoder.SetAttribute(vga.Standout)
 		case 4: // underline
 			decoder.SetAttribute(vga.Underline)
-		case 5: // blink
+		case 5, 6: // blink
 			decoder.SetAttribute(vga.Blink)
 		case 7: // reverse
 			decoder.SetAttribute(vga.Reverse)
 		case 8: // invisible
-			decoder.SetAttribute(vga.Invisible)
+			decoder.SetAttribute(vga.Conceal)
+		case 9: // crossed out
+			decoder.SetAttribute(vga.CrossedOut)
 		case 22: // normal
 			decoder.ClearAttributes()
-		case 23: // no-standout
+		case 23: // not standout
 			decoder.ClearAttribute(vga.Standout)
-		case 24: // no-underline
+		case 24: // not underline
 			decoder.ClearAttribute(vga.Underline)
-		case 25: // no-blink
+		case 25: // not blink
 			decoder.ClearAttribute(vga.Blink)
-		case 27: // no-reverse
+		case 27: // not reverse
 			decoder.ClearAttribute(vga.Reverse)
+		case 28: // reveal
+			decoder.ClearAttribute(vga.Conceal)
+		case 29: // not crossed out
+			decoder.ClearAttribute(vga.CrossedOut)
 		case 30, 31, 32, 33, 34, 35, 36, 37:
 			decoder.SetForegroundColor(vga.Palette[args[i]-30])
 		case 38: // color mode
@@ -329,9 +383,15 @@ func (decoder *Decoder) processSGRMode(args []int) {
 			if ok {
 				decoder.SetForegroundColor(c)
 			}
+			tracef("skip %d (%d -> %d)", skip, i, i+skip)
 			i += skip
 		case 39: // default foreground
-			decoder.SetBackgroundColor(vga.White)
+			if i == 2 {
+				// 256-color mode
+				decoder.SetForegroundColor(vga.Palette[args[1]])
+			} else {
+				decoder.SetForegroundColor(vga.White)
+			}
 		case 40, 41, 42, 43, 44, 45, 46, 47:
 			decoder.SetBackgroundColor(vga.Palette[args[i]-40])
 		case 48: // color mode
@@ -341,35 +401,60 @@ func (decoder *Decoder) processSGRMode(args []int) {
 			}
 			i += skip
 		case 49: // default background
-			decoder.SetBackgroundColor(vga.Black)
+			if i == 2 {
+				// 256-color mode
+				decoder.SetBackgroundColor(vga.Palette[args[1]])
+			} else {
+				decoder.SetBackgroundColor(vga.Black)
+			}
+		}
+	}
+}
+
+func (decoder *Decoder) processCustomMode(args []int) {
+	if len(args) == 4 {
+		switch args[0] {
+		case 0: // "24-bit ansi" by SyncTerm
+			decoder.SetBackgroundColor(vga.NewRGB(uint8(args[1]), uint8(args[2]), uint8(args[3])))
+		case 1:
+			decoder.SetForegroundColor(vga.NewRGB(uint8(args[1]), uint8(args[2]), uint8(args[3])))
 		}
 	}
 }
 
 func processSGRModeColor(args []int) (skip int, c color.Color, ok bool) {
-	if len(args) == 0 {
+	tracef("process SGR mode color %v", args)
+	if len(args) < 2 {
 		return
 	}
 	switch args[0] {
-	case 2: // 24-bit color mode
-		if len(args) < 4 {
-			skip = 1 // dno
-			return
+	case 38, 48:
+		args = args[1:]
+		switch args[0] {
+		case 2: // 24-bit color mode
+			if len(args) < 4 {
+				skip = 1 // dno
+				return
+			}
+			args = args[1:]
+			return 4, &color.RGBA{uint8(args[0]), uint8(args[1]), uint8(args[2]), 0xff}, true
+		case 5: // 256 color mode
+			if len(args) < 2 {
+				skip = 2 // dno
+				return
+			}
+			args = args[1:]
+			if args[0] >= len(vga.Palette) {
+				tracef("VGA color %d out of range", args[0])
+				skip = 2
+				return
+			}
+			tracef("VGA color %d", args[0])
+			return 2, vga.Palette[args[0]], true
 		}
-		return 4, color.RGBA{uint8(args[1]), uint8(args[2]), uint8(args[3]), 0xff}, true
-	case 5: // 256 color mode
-		if len(args) < 2 {
-			skip = 1 // dno
-			return
-		}
-		if args[1] >= len(vga.Palette) {
-			skip = 2
-			return
-		}
-		return 2, vga.Palette[args[1]], true
-	default: // unknown mode
-		return 1, nil, false
 	}
+	// unknown mode
+	return 1, nil, false
 }
 
 func defaultInt(v []int, d int) int {
@@ -390,3 +475,11 @@ func defaultInts(v []int, d []int) []int {
 	}
 	return v
 }
+
+// Interface checks
+var (
+	_ parser.Parser         = (*Decoder)(nil)
+	_ parser.Image          = (*Decoder)(nil)
+	_ parser.Animation      = (*Decoder)(nil)
+	_ parser.AnimationDelay = (*Decoder)(nil)
+)

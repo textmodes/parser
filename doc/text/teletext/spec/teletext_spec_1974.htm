@@ -1,0 +1,2724 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=iso-8859-1">
+<meta name="GENERATOR" content="Microsoft FrontPage Express 2.0">
+<title>Broadcast Teletext Specification</title>
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 align="center"><font color="#0000FF">Broadcast Teletext
+Specification</font></h1>
+<div align="center"><center>
+
+<table border="0" width="100%">
+<tr>
+<td valign="top"><a href="#INTRODUCTION"><strong>Introduction</strong></a><p><a
+href="#TELEVISION DATA LINES"><strong>Television Data
+Lines</strong></a></p>
+<p><a href="#ORGANISATION OF PAGES AND ROWS"><strong>Organisation
+of Pages and Rows</strong></a></p>
+<p><a href="#PAGE DISPLAY"><strong>Page Display</strong></a></p>
+<p><a href="#DEFINITION OF TELETEXT TERMS"><strong>Definition
+of Teletext Terms</strong></a></p>
+<p><a href="#Possible application to 525/60 Systems"><strong>Possible
+application to 525/60 Systems</strong></a></p>
+</td>
+<td valign="bottom"><p align="right">Price £1</p>
+<p align="right">September 1976</p>
+<p align="right">Published jointly by the<br>
+British Broadcasting Corporation<br>
+Independent Broadcasting Authority<br>
+British Radio Equipment Manufacturer's Association</p>
+</td>
+</tr>
+</table>
+</center></div>
+
+<hr size="1">
+
+<h2><font color="#0000FF">Figures</font></h2>
+
+<blockquote>
+<table border="0" cellpadding="3" cellspacing="0">
+<tr>
+<td>1.</td>
+<td><a href="#TELETEXT DATA LINES"><strong>Teletext
+Data Lines</strong></a></td>
+</tr>
+<tr>
+<td>2.</td>
+<td><a href="#DATA LEVELS"><strong>Data Levels</strong></a></td>
+</tr>
+<tr>
+<td>3.</td>
+<td><a href="#DATA TIMING"><strong>Data Timing</strong></a></td>
+</tr>
+<tr>
+<td>4.</td>
+<td><a
+href="#AN APPROXIMATE SPECTRUM OF A DATA PULSE"><strong>An
+Approximate Spectrum of a Data Pulse</strong></a></td>
+</tr>
+<tr>
+<td>5.</td>
+<td><a href="#AN APPROXIMATE ONE-BIT DATA PULSE"><strong>An
+Approximate One-bit Data Pulse</strong></a></td>
+</tr>
+<tr>
+<td>6.</td>
+<td><a
+href="#SYNCHRONISATION AND HAMMING CODES AT START OF PAGE HEADER AND ROW TRANSMISSIONS"><strong>Synchronisation
+and Hamming codes at start of Page Header and Row
+transmissions</strong></a></td>
+</tr>
+<tr>
+<td>7a.</td>
+<td><a href="#PAGE HEADER FORMAT"><strong>Page Header
+Format</strong></a></td>
+</tr>
+<tr>
+<td>7b.</td>
+<td><a href="#ROW FORMAT"><strong>Row Format</strong></a></td>
+</tr>
+<tr>
+<td>8.</td>
+<td><a
+href="#EXAMPLES OF ALPHANUMERIC AND GRAPHIC DISPLAYS"><strong>Examples
+of Alphanumeric and Graphic Displays</strong></a></td>
+</tr>
+<tr>
+<td>9.</td>
+<td><a href="#IDEALISED OPERATION OF FRAMING CODE"><strong>Idealised
+Operation of Framing Code</strong></a></td>
+</tr>
+</table>
+</blockquote>
+
+<hr size="1">
+
+<h2><font color="#0000FF">Tables</font></h2>
+
+<blockquote>
+<table border="0" cellpadding="3" cellspacing="0">
+<tr>
+<td>1a.</td>
+<td><a href="#HAMMING CODE BYTES"><strong>Hamming
+Code Bytes</strong></a></td>
+</tr>
+<tr>
+<td>1b.</td>
+<td><a href="#HAMMING CODES - TESTS FOR ODD PARITY"><strong>Hamming
+codes - tests for odd parity</strong></a></td>
+</tr>
+<tr>
+<td>1c.</td>
+<td><a href="#HAMMING CODES - DECODING ACTION"><strong>Hamming
+codes - decoding action</strong></a></td>
+</tr>
+<tr>
+<td>2.</td>
+<td><a href="#DISPLAY MODES AND CONTROL CHARACTERS"><strong>Display
+Modes and Control Characters</strong></a></td>
+</tr>
+<tr>
+<td>3.</td>
+<td><a href="#TELETEXT CHARACTER CODES"><strong>Teletext
+Character Codes</strong></a></td>
+</tr>
+</table>
+</blockquote>
+
+<hr size="1">
+
+<h1><a name="FOREWORD"><font color="#0000FF">FOREWORD</font></a></h1>
+
+<p>This document describes the parameters of the Teletext signals
+transmitted in the United Kingdom by the BBC and the Independent
+Television Networks. It supercedes earlier specifications. The
+BBC uses the name Ceefax and the Independent Television Companies
+use the name Oracle for their public information services. The
+technical specifications of the Oracle and Ceefax signals are
+identical.</p>
+
+<p>Based on experience gained in the initial years of the
+transmissions, changes have been made since the first
+specification published in October 1974. Additional Control
+Characters have been allocated to pprovide facilities which can
+be used to enhance the display of information. The changes have
+been made in such a way that future transmissions remain
+compatible with Teletext decoders based on the later
+specification dated January 13th 1976.</p>
+
+<p>Distortions, noise and spurious signals inevitably degrade the
+signal to a greater or lesser extent. An important point to note
+is that an increase in the magnitude of these effects will cause
+a gradual deterioration in analogue television while a digital
+signal, such as Teletext, can still be decoded until the
+disturbances exceed a critical level. Field studies have
+confirmed that in almost all cases this critical level for
+Teletext occurs when television reception is already poor.</p>
+
+<hr size="1">
+
+<h1><a name="INTRODUCTION"><font color="#0000FF">INTRODUCTION</font></a></h1>
+
+<p>This document defines the Teletext broadcasting system. Much
+of the detailed information is carried by figure and tables. The
+description is in four sections.</p>
+
+<p>The first section describes how binary code groups are formed
+into Data-Lines for inclusion in the television field blanking
+interval.</p>
+
+<p>The second section describes how the control and address
+information carried on each Data-Line, together with the special
+Page-Header Data-Lines and the sequence of transmission of the
+Data-Lines, allow the Data-Lines corresponding to the Rows of a
+selected Page to be identified.</p>
+
+<p>The third section describes how the Character Codes received
+on the Data-Lines corresponding to the Rows of the selected Page
+are interpreted to give the Page display.</p>
+
+<p>The fourth section defines Teletext terms.</p>
+
+<hr size="1">
+
+<h1><font color="#0000FF">1. </font><a
+name="TELEVISION DATA LINES"><font color="#0000FF">TELEVISION
+DATA LINES</font></a></h1>
+
+<p>The television signal includes unused lines in the
+field-blanking interval (see figure 1) to allow time for field
+flyback in receivers before each active field begins. The
+duration of this interval is usually 25 lines, and some of the
+later lines are used by broadcasters for test and signalling
+purposes.</p>
+
+<p>This system can use any of the unused lines as Data-Lines.
+Initially lines 17 (330) and 18 (331) are being used but other
+lines may be used.</p>
+
+<p>A line in the field-blanking interval is identified as a
+Teletext Data-Line by the presence of the clock run-in (see
+1.2.1) followed by the Framing Code (see 1.2.2) at an appropriate
+time.</p>
+
+<h2><font color="#0000FF">1.1 Data-Line Waveform</font></h2>
+
+<p>Each Data-Line contains binary digits (bits) as a two-level
+NRZ (Non-Return-to-Zero) signal, suitably shaped by a filter.</p>
+
+<h3><font color="#0000FF">1.1.1 Data Levels</font></h3>
+
+<p>The binary signalling levels are defined on a scale where
+television black level is 0% and white level 100% (see figure 2).
+The binary '0' level is then 0 (±2)% and binary '1' level is
+66(±6)%. The difference between these levels is the basic data
+amplitude. The data waveform will contain overshoots so the
+peak-to-peak amplitude will exceed the basic data amplitude. The
+basic data amplitude may vary from Data-Line to Data-Line.</p>
+
+<h3><font color="#0000FF">1.1.2 Bit rate</font></h3>
+
+<p>The bit signalling rate is 6.9375 Mbits/s (±25 parts per
+million). It is 444 times the nominal television line frequency.</p>
+
+<h3><font color="#0000FF">1.1.3 Data Timing</font></h3>
+
+<p>The data timing reference point is the peak of the penultimate
+'1' of the Clock Run-In Sequence (see figure 3). This point has
+been selected to reduce the effect of any transient distortions
+at the start of the Data-Line.</p>
+
+<p>The line time reference is the half-amplitude point of the
+leading edge of the line synchronisation pulse.</p>
+
+<p>The data timing reference in the signal as transmitted shall
+be 12.0 (+0.4/-1.0) µs after the line time reference.</p>
+
+<p>The data timing may vary from Data-Line to Data-Line.</p>
+
+<h3><font color="#0000FF">1.1.4 Data Pulse Shape</font></h3>
+
+<p>The spectrum of the generated data pulses, which is the
+product of the spectrum of the basic NRZ data waveform and that
+of a phase-corrected shaping filter, is indicated in figure 4. To
+minimise intersymbol interference the spectrum is substantially
+skew-symmetrical about a frequency corresponding to one-half of
+the bit rate. There is minimal energy above 5.0 MHz.</p>
+
+<p>The corresponding one-bit pulse is indicated in figure 5.</p>
+
+<h2><font color="#0000FF">1.2 Data Line Structure</font></h2>
+
+<p>Each Data-Line comprises 360 bits which may be considered as
+45 eight-bit bytes.</p>
+
+<p>The first three bytes, which have even parity, serve to
+synchronise the bit and byte recovery operation in the receiver.
+The remaining 42 bytes have odd parity and carry addresses and
+control information, and the codes for a character Row (see
+figure 6).</p>
+
+<p>The use of odd parity during the variable part of the
+Data-Line ensures that there are never more than 14 bit periods
+between the data level transitions in the wave form. This
+simplifies the recovery of the bit-rate clock directly from the
+data waveform.</p>
+
+<p>All the address and Page control information is transmitted
+using Hamming Code Bytes to reduce the possibility of the wrong
+Character Rows being stored in the receiver.</p>
+
+<h3><font color="#0000FF">1.2.1 Clock Run-In</font></h3>
+
+<p>The first two Bytes of every Data Line comprise the Clock
+Run-In sequence of alternating bits, beginning 101010... to
+indicate the presence of a Data-Line and to establish the timing
+of bits on that line (see figure 6)</p>
+
+<p>In some circumstances the first one or two binary '1's may be
+absent.</p>
+
+<h3><font color="#0000FF">1.2.2 Framing Code</font></h3>
+
+<p>The third Byte of every Data-Line comprise the Framing Code
+11100100. This code has been selected to enable Byte
+synchronisation to be even if one bit of the Framing Code has
+been wrongly received.</p>
+
+<p>Figure 9 indicates how incoming data are compared with the
+Framing Code pattern. It shows that a test for any seven
+corresponding bits will give a correct indication of the Framing
+Code in the presence of a single error.</p>
+
+<h3><font color="#0000FF">1.2.3 Hamming Codes </font></h3>
+
+<p>The fourth and fifth Byte of every Data-Line, and a further
+eight Bytes of the Page-Header Data Lines, are Hamming Codes
+containing four 'message' bits as listed in table 1a. The bits
+are transmitted in numerical order from b1 to b8.</p>
+
+<p>Table 1b details four parity tests that can be made on the
+received Byte and detect multiple errors (when 2,4, or 6 bits are
+in error). When there are 3, 5, 7 or 8 errors in the Byte this
+procedure results in a false message being decoded.</p>
+
+<p>Figure 6 shows the locations and lists the functions of all
+the Hamming 'message' bits. When error correction is used the
+decoded message bit may differ from the corresponding bit in the
+Data-Line as the bits of the Hamming Code are interdependent.</p>
+
+<h3><font color="#0000FF">1.2.4 Character Bytes</font></h3>
+
+<p>The remaining Bytes of each Data-Line are seven-bit Character
+Codes (see table 3) with an added odd-parity bit b8. The bits are
+transmitted in numerical order from b1 to b8.</p>
+
+<hr size="1">
+
+<h1><font color="#0000FF">2. </font><a
+name="ORGANISATION OF PAGES AND ROWS"><font color="#0000FF">ORGANISATION
+OF PAGES AND ROWS</font></a></h1>
+
+<h2><font color="#0000FF">2.1 Addresses</font></h2>
+
+<h3><font color="#0000FF">2.1.1 Magazine and Row Address Group</font></h3>
+
+<p>Every Data-Line contains two Hamming Coded signifying a
+three-bit Magazine number and a five-bit Row address (see figure
+6).</p>
+
+<p>The Magazine number is in the range 1 to 8, magazine 8
+corresponding to the bits 000 and the others being directly
+obtained with the bit weights given in figure 6.</p>
+
+<p>The Row address is normally in the range 0 to 23, and it is
+the number directly obtained with the bit weights given in figure
+6. Row addresses in the range 24 to 31 may be transmitted but
+such Data-Lines must be ignored.</p>
+
+<h3><font color="#0000FF">2.1.2 Page Header</font></h3>
+
+<p>Data-Lines with Row address 0 are Page-Headers, which contain
+eight additional Hamming Code bytes with message bits relating to
+that Page, including the two digits of the Page number and the
+four-digit Time Code (see figure 6). The display and control
+functions of the other message bits are detailed in 2.3 below.</p>
+
+<h3><font color="#0000FF">2.1.3 Page Identification and Time Code</font></h3>
+
+<p>Each Page is identified by its single-digit Magazine number
+(1-8) and its two-digit Page number (00-99).</p>
+
+<p>Different Pages with the same Magazine and Page numbers may be
+identified by invoking a four-digit Time Code whereby up to 32000
+versions of that Page may be individualy selected and held.</p>
+
+<p>The 'Hours' and 'Minutes' of the Time Code are not necessarily
+related to clock-time. The 'Hours Tens' may take any value 0 to 3
+and the 'Minutes Tens' may take any value 0 to 7.</p>
+
+<h3><font color="#0000FF">2.1.4 Page Selection</font></h3>
+
+<p>A Page may be selected by its Magazine number and Page number,
+or by its Magazine number, Page number and Time Code.</p>
+
+<p>Neither type of Page selection should respond to Page number
+'Units' or 'Tens' in the range 10 to 15, and selection by Time
+Code should not respond to 'Minutes Units' or 'Hours Units' in
+that range, which may be used for other purposes.</p>
+
+<h2><font color="#0000FF">2.2 Transmission Sequence</font></h2>
+
+<h3><font color="#0000FF">2.2.1 Pages</font></h3>
+
+<p>The transmission of a selected Page begins with, and includes,
+its Page-Header and ends with, and excludes, the next Page-Header
+of the selected Magazine number. All the intermediate Data-Lines
+carrying the selected Magazine number relate to the selected
+Page.</p>
+
+<p>Pages may be transmitted in any order. Occasionally incomplete
+Pages may be transmitted. Rows from Pages of different magazine
+number may be interleaved in time.</p>
+
+<h3><font color="#0000FF">2.2.2 Rows</font></h3>
+
+<p>The Rows of a Page begins may be transmitted in any order.
+Rows, including the Page-Header, may be repeated in which case
+the latest apparently error-free information should take
+precedence. Rows containing no information for display need not
+be transmitted.</p>
+
+<h3><font color="#0000FF">2.2.3 Page Erasure Interval</font></h3>
+
+<p>Rows will be transmitted such as to allow an active television
+field period between an initial Page-header and further Rows
+sufficient to complete the transmission for that page.</p>
+
+<p>This allows one display period for the receiver Page store to
+be erased when necessary.</p>
+
+<h2><font color="#0000FF">2.3 Page-Header Structure</font></h2>
+
+<p>The Page-Header Data-Lines (see 2.1.2) contain eight Hamming
+Code Bytes in place of the first eight Character Bytes of the
+other Data-Lines (see figures 6 and 7).</p>
+
+<p>There are thus only 32 Character Codes in a Page-Header. They
+are used to present general information for display, such as the
+Magazine and Page number, the day and the date and the programme
+source. In particular, the last eight characters are reserved for
+the display of clock-time. Examples of the content of a Page
+Header are given in figure 7a.</p>
+
+<h3><font color="#0000FF">2.3.1 Control Bits (see figure 6)</font></h3>
+
+<table border="1" cellpadding="5" cellspacing="0">
+<tr>
+<td valign="top">C4</td>
+<td valign="top">Erase Page. This Control Bit is set to
+'1' when the information on that page is significantly
+diferent from that in a previous transmission of the Page
+bearing the same Magazine and Page number, such that the
+two should not be confused.<br>
+Its use will alwas be followed by a Page Erasure interval
+(see 2.2.3).</td>
+</tr>
+<tr>
+<td valign="top">C5</td>
+<td valign="top">Newsflash Indicator. This Control Bit is
+set to '1' on a page designated as a 'Newsflash' Page,
+whether or not it currently contains information. All
+information intended for display on such a Page wil be
+Boxed (see 3.1.5).</td>
+</tr>
+<tr>
+<td valign="top">C6</td>
+<td valign="top">Subtitle Indicator. This Control Bit is
+set to '1' on a Page designated as a 'Subtitle' Page,
+whether or not it currently contains information. All
+information intended for display on such a Page wil be
+Boxed (see 3.1.5).</td>
+</tr>
+<tr>
+<td valign="top">C7</td>
+<td valign="top">Suppress Header. This Control Bit is set
+to '1' when the Page is better displayed without the
+characters of the Page-Header</td>
+</tr>
+<tr>
+<td valign="top">C8</td>
+<td valign="top">Update Indicator. This Control Bit may
+be set to '1' when when part or all of a Page contains
+later information than that of the previous transmission
+of the Page bearing the same Magazine and Page number.
+The 'Update' Page transmission may be incomplete,
+containing only the updated Rows of a Page (see 2.2.1).</td>
+</tr>
+<tr>
+<td valign="top">C9</td>
+<td valign="top">Interrupted Sequence. This Control Bit
+is set to '1' when a Page is transmitted out of strict
+numerical sequence in order to give it priority (such as
+a Subtitle Page) or more frequent transmission (such as
+an Index Page).<br>
+It allows the Page Header to be suppressed when Rolling
+Headers are displayed, to avoid discontinuities in the
+displayed Page numbers.</td>
+</tr>
+<tr>
+<td valign="top">C10</td>
+<td valign="top">Inhibit Display. This Control Bit is set
+to '1' when contents of a Page cannot be usefully
+interpreted as a Teletext transmission. It can be used to
+inhibit the display of meaningless Pages.</td>
+</tr>
+<tr>
+<td valign="top">C11</td>
+<td valign="top">Magazine Serial. This Control Bit is set
+to '1' when the transmission sequence of Magazines and
+Pages is such that it is preferable to display all
+Page-Headers as Rolling Headers rather than only those of
+the selected Magazine.</td>
+</tr>
+<tr>
+<td valign="top">C12<br>
+C13<br>
+C14</td>
+<td valign="top">Unallocated. It is desirable that these
+unallocated Control Bits be accessible in decoders for
+future use as display control functions.</td>
+</tr>
+</table>
+
+<hr size="1">
+
+<h1><font color="#0000FF">3. </font><a name="PAGE DISPLAY"><font
+color="#0000FF">PAGE DISPLAY</font></a></h1>
+
+<p>The 24 Rows of a Page are numbered sequentially from 0
+(Page-Header, top Row) to 23. The 40 Character Rectangles of a
+row are directly related to the 40 Character Bytes of the
+corresponding Data-Line, each being assumed to be scanned
+sequentially from left to right (see figure 7).</p>
+
+<p>Each Character Byte contains a Character Code which represents
+either a Display Character or a Control Character. The Control
+Characters are used to establish Display Modes, which may be
+changed between Character Rectangles within a Row.</p>
+
+<p>The Display Modes determine how a Display Character is
+interpreted as a character to be generated in the corresponding
+Character Rectangle of the Page Display. The Character Rectangles
+corresponding to Control Character Codes are generally displayed
+as Spaces (but see 3.1.7).</p>
+
+<h2><font color="#0000FF">3.1 Display Modes</font></h2>
+
+<p>The Display Modes are listed in table 2 as complementary
+pairs; those on the left are assumed at the start of every Row.
+The Control Character Codes listed with each mode are used to
+initiate that mode.</p>
+
+<p>Some Control Characters have immediate effect ('set at') in
+that the new module obtains for and from the corresponding
+Character Rectangle, others have subsequent effect ('set after')
+when the new mode obtains for and from the next Character
+Rectangle. A later Control Character takes precendence over an
+earlier one.</p>
+
+<p>When a Control Characters signifies a change to a mode already
+obtaining, that mode generally continues uninterrupted throughout
+the corresponding Character Rectangle (but see 3.1.3).</p>
+
+<p>In general the Character Codes of a Row are sufficient to
+define the entire display of that Row (but see 3.1.6).</p>
+
+<p>The interpretation of the Display Modes is detailed below.</p>
+
+<h3><font color="#0000FF">3.1.1 Character Set</font></h3>
+
+<p>Three overlapping sets of 96 Display Characters are available
+for interpretation of the 96 Display Character Codes.</p>
+
+<p>During the Alphanumerics Mode the Alphanumerics Set applies.
+During the Graphics Mode the Contiguous Set applies during the
+Contiguous Mode and the Separated Set applies during the
+Separated Mode.</p>
+
+<h3><font color="#0000FF">3.1.2 Display Colour</font></h3>
+
+<p>One of the seven colours white, yellow, cyan, green, magenta,
+red, blue is used to depict the Display Character in the
+Character Rectangle. Seven pairs of Control Characters are
+available so that the Display Colour and/or the
+Alphanumerics/Graphics Mode may be changed by a single Control
+Character. There is a direct correspondence between bits b1, b2,
+b3 of these codes and the red, green and blue components of these
+colours.</p>
+
+<h3><font color="#0000FF">3.1.3 Background Colour</font></h3>
+
+<p>The Background Colour of the Character Rectangles is black
+during the Black Background mode. Whenever a new background
+Control Character 1/13 (see table 3) occurs the Display Control
+then obtaining is adopted as the Background Colour in thhe new
+Background mode.</p>
+
+<p>One of the seven colours white, yellow, cyan, green, magenta,
+red, blue is used to depict the Display Character in the
+Character Rectangle. Seven pairs of Control Characters are
+available so that the Display Colour and/or the
+Alphanumerics/Graphics Mode may be changed by a single Control
+Character. There is a direct correspondence between bits b1, b2,
+b3 of these codes and the red, green and blue components of these
+colours.</p>
+
+<h3><font color="#0000FF">3.1.4 Conceal and Flash</font></h3>
+
+<p>Two modes are provided wherein the display Characters are
+displayed as Spaces at certain times. All characters in the
+Conceal mode are displayed as Spaces until the Reveal mode is
+restored after a time delay in the receiver or by user control.
+All characters in the Flash mode are displayed alternately as
+they would otherwise be displayed, and as Spaces, under the
+control of a timing device in the receiver.</p>
+
+<h3><font color="#0000FF">3.1.5 Boxing</font></h3>
+
+<p>All characters intended for display on Newsflash and Subtitle
+Pages will be in the Boxed Mode, which define the part of the
+Page which is to be inset into normal television picture. This
+inset operation may be controlled automatically by the Control
+Bits C5 or C6 (see 2.3.1).</p>
+
+<p>Some or all of the characters on any other Pages may be Boxed,
+the Boxed Mode then defines a part of the Page which may be inset
+into the normal television picture under user control as an
+alternative to the display of the complete Page alone, or
+superimposed on the picture.</p>
+
+<p>In order to give protection against spurious Boxing, two
+consecutive Start Box Control Characters 0/11 (see table 3) will
+be transmitted to start the Boxed Mode and two consecutive End
+Box Control Characters 0/10 will be transmitted to terminate that
+mode. The mode changes occur between the corresponding
+consecutive Character Rectangles</p>
+
+<h3><font color="#0000FF">3.1.6 Double Height</font></h3>
+
+<p>Whenever the Double Height mode occurs the information in that
+Row is sufficient to define the display both that Row and the Row
+of next higher address. A receiver responding to the Double
+Height mode on a Row must ignore any information received for the
+Row of next higher address, but a receiver not responding to this
+mode will operate normally on both Rows.</p>
+
+<p>A receiver responding to one or more occurences of the Double
+Height mode in Row 'R' will operate as otherwise during that Row
+except that in every Character Rectangle during the Double Height
+mode only the upper half of what would otherwise have been
+displayed is displayed, stretched vertically to fill the
+rectangle. On Row 'R+1' the corresponding lower half of each of
+these is similarly displayed. The remaining Character Rectangles
+of Row 'R+1' are to be displayed as unboxed spaces of the same
+Background colour as the corresponding Character Rectangles of
+Row 'R'.</p>
+
+<h3><font color="#0000FF">3.1.7 Hold Graphics</font></h3>
+
+<p>Generally all Control Characters are displayed as Spaces,
+implying at least one space between rectangles with different
+Display Colours in the same Row. The Hold Graphics mode allows a
+limited range of abrupt display Display Colours by calling for
+the display of a Held Graphics Character in the rectangle
+corresponding to any Control Character occurring during the
+Graphics Mode. This Held Character is displayed in the modes
+obtaing for the rectangle in which it is display, except for the
+Contiguous/Separated Mode which forms part of the structure of
+the Held Graphics Character</p>
+
+<p>The Held Graphics Character is only defined during the
+Graphics Mode. It is then the most recent character with b6=1 in
+its character code, providing that there has been no intervening
+change in either the Alphanumerics/Graphics or the Normal/Double
+Height modes. This character is to be displayed in the
+Contiguous/Separated Mode as when it was first displayed. In the
+absence of such a character the Held Graphics Character is taken
+to be a space.</p>
+
+<hr size="1">
+
+<h1><font color="#0000FF">4. </font><a
+name="DEFINITION OF TELETEXT TERMS"><font color="#0000FF">DEFINITION
+OF TELETEXT TERMS</font></a></h1>
+
+<p><font color="#0000FF"><strong>Access Time</strong></font> The
+time between selecting a page at a receiver and the first
+complete reception of that page.</p>
+
+<p><font color="#0000FF"><strong>Alphanumerics Character</strong></font>
+One of the 96 Display Characters listed in columns 2,3,4,5,6, and
+7 of Table 3. The shapes of the characters are not defined but
+should all be different and recognisable.</p>
+
+<p><font color="#0000FF"><strong>Alphanumerics Mode</strong></font>
+The Display Mode in which the Display Characters are those in the
+Alphanuerics Set.</p>
+
+<p><font color="#0000FF"><strong>Background Colour</strong></font>
+The colour filling the parts of the Character Rectangle not
+occupied by the character itself (see figure 8). The Background
+Colour may be black or any of the seven Display Colours. It may
+be changed within a Row by Control Characters.</p>
+
+<p><font color="#0000FF"><strong>Blast-Through Alphanumerics</strong></font>
+The use of the 32 Alphanumeric Characters of columns 4 and 5 of
+table 3 during the Graphics Mode.</p>
+
+<p><font color="#0000FF"><strong>Boxed Mode</strong></font> The
+Display Mode in which, under the user's control, the characters
+are intended to be inset or added to a television picture. When a
+Newsflash or Subtitle is transmitted this operation may be
+automatic under the control of Control Bits.</p>
+
+<p><font color="#0000FF"><strong>Broadcast Teletext</strong></font>
+The information broadcastings system defined in this document</p>
+
+<p><font color="#0000FF"><strong>Byte</strong></font> A group of
+eight consecutive data bits intended to be treated as an entity.</p>
+
+<p><font color="#0000FF"><strong>Character Byte</strong></font>
+The Byte obtained by appending an odd-parity bit to the Character
+Code.</p>
+
+<p><font color="#0000FF"><strong>Character Code</strong></font> A
+seven-bit binary number representing one of a set of Display
+Characters, or a Control Character.</p>
+
+<p><font color="#0000FF"><strong>Character Rectangle</strong></font>
+One of the 960 units in the regular matrix of 24 rows by 40 sites
+in which the characters are displayed on the screen.</p>
+
+<p><font color="#0000FF"><strong>Character Row </strong></font>See
+<a href="#row"><strong>Row</strong></a>.</p>
+
+<p><font color="#0000FF"><strong>Clock Run-In</strong></font> A
+sequence of alternating bits at the start of a Data Line to allow
+a receiver to achieve bit synchronization.</p>
+
+<p><font color="#0000FF"><strong>Conceal</strong></font> A
+Display Mode during which all characters, although stored in the
+receiver, are displayed as spaces until the viewer chooses to
+reveal them.</p>
+
+<p><font color="#0000FF"><strong>Contiguous Graphics Set</strong></font>
+The set of 96 Display Characters comprising the 64 Contiguous
+Graphics Characters listed in columns 2a, 3a, 6a and 7a of table
+3, together with the 32 Blast-Through Alphanumerics Characters of
+columns 4 and 5.</p>
+
+<p><font color="#0000FF"><strong>Contiguous Mode</strong></font>
+The Display Mode in which the six cells of the Graphics
+Characters fill the Character Rectangle (see figure 8).</p>
+
+<p><font color="#0000FF"><strong>Control Bits</strong></font>
+Each Page Header contains 11 Control Bits to control the display
+of the Page and its header (see 2.3.1).</p>
+
+<p><font color="#0000FF"><strong>Control Character</strong></font>
+One of the 32 characters listed in columns 0 and 1 of table 3.
+Five of these are reserved for compatibility with other data
+codes. The others are used to alter the Display Modes. They are
+usually displayed as Spaces (but see 3.1.7)</p>
+
+<p><a name="data line"><font color="#0000FF"><strong>Data Line</strong></font></a>
+One of the otherwise unused lines in the television field
+blanking interval used to carry information for a Teletext
+Character Row. A Data Line is identified by the Clock Run-In
+sequence followed by a Framing Code at the appropriate time on a
+line in the field interval.</p>
+
+<p><font color="#0000FF"><strong>Display Character</strong></font>
+One of 222 different shapes which can be generated in a Character
+Rectangle as part of a Page. These are Alphanumerics Characters
+to provide text and Graphics Characters to provide elementary
+pictorial information. There are three sets: the Alphanumerics
+set, the Contiguous Graphics set and the Separated Graphics Set,
+each of 96 Display Characters, some of which are common.</p>
+
+<p><font color="#0000FF"><strong>Display Colour</strong></font>
+One of the seven colours (white, yellow, cyan, green, magenta,
+red, blue) used to depict a Dispaly Character against the
+Background Colour in a Character Rectangle. The Display Colour
+may be changed within a Row by Control Characters.</p>
+
+<p><font color="#0000FF"><strong>Display Mode</strong></font> The
+way in which the Character Codes corresponding to Display
+Characters are interpreted and displayed depends on Display Modes
+established by previous Control Characters (see table 2). These
+modes may be changed within a Row, and an initial set of modes is
+defined for the start of a Row.</p>
+
+<p><font color="#0000FF"><strong>Flash</strong></font> A display
+mode in which all character alternate as they would otherwise be
+displayed, and as Spaces, under the control of a timing device in
+the receiver.</p>
+
+<p><font color="#0000FF"><strong>Framing Code</strong></font> A
+Byte following the Clock Run-In sequence, selected to allow the
+receiver to achieve Byte synchronization even if one of its bits
+is wrongly decoded.</p>
+
+<p><font color="#0000FF"><strong>Graphics Character</strong></font>
+One of the 127 different Display Characters based on the division
+of the Character Rectangle into six cells, the cells being
+Contiguous or Separated. The corresponding Character Codes have
+B6=1; there is a direct correspondence between the other six bits
+of the code and the states of the six cells of the Character
+Rectangle. Examples are given in figure 8.</p>
+
+<p><font color="#0000FF"><strong>Graphics Mode</strong></font>
+The Display Mode in which the Display Characters are those of one
+or the other Graphics Sets, depending on whether the Contiguous
+or Separated mode is being used. </p>
+
+<p><font color="#0000FF"><strong>Hamming code</strong></font> AIn
+the Teletext system a Hamming Code is a Byte containing four
+message bits and four protection bits as indicated in table 1. A
+single-bit error in such a Byte can be corrected. Hamming Codes
+are used for sending addres and control information.</p>
+
+<p><font color="#0000FF"><strong>Hold Graphics</strong></font> A
+Display Mode in which any Control Character occurring during the
+Graphics Mode results in the display of a Held Graphics character
+(see 3.1.7).</p>
+
+<p><font color="#0000FF"><strong>Magazine</strong></font> A group
+of up to 100 numbered Pages, each carrying a common Magazine
+number in the range 1 to 8. Up to eight magazines may be
+transmitted in sequence or independently on a television
+programme channel.</p>
+
+<p><font color="#0000FF"><strong>Newsflash Page</strong></font> A
+Page in which all the information for display is Boxed, and
+Control Bit C5 is set to allow this information to be
+automatically inset or added to a television picture.</p>
+
+<p><font color="#0000FF"><strong>Page</strong></font> A group of
+up to 24 Rows of 40 characters intended to be displayed as an
+entity on the television screen.</p>
+
+<p><font color="#0000FF"><strong>Page Header</strong></font> A
+Page Header Data Line has Row address '0' and it separates the
+Pages of a Magazine in the sequence of transmitted Data Lines. In
+place of the first eight Character Bytes it contains Hamming
+Coded address and control information relating to that Page. Thus
+the top Row of the Page has only 32 Character Bytes. These are
+used for the transmission of general information such as Magazine
+and Page number, day and date, programme source and clock time.</p>
+
+<p><font color="#0000FF"><strong>Release Graphics</strong></font>
+The Display mMode in which Control Characters are invariably
+displayed as Spaces. It is complementary to the Hold Graphics
+Mode.</p>
+
+<p><font color="#0000FF"><strong>Reveal</strong></font> The
+Display Mode complementary to the Conceal Mode.</p>
+
+<p><font color="#0000FF"><strong>Rolling Headers</strong></font>
+The use of the top Row of the page to display all the Page
+Headers of the selected Magazine as they are transmitted. This
+gives an indication of the Page transmission sequence while the
+user is watching, or awaiting, a selected page. </p>
+
+<p><a name="row"><font color="#0000FF"><strong>Row</strong></font></a>
+A Page comprises 24 Rows of characters. When displayed on a
+television screen each row occupies about 20 television display
+lines. Each Row is generated from the information on one
+television Data-Line. It is to avoid confusion with television
+'lines&#146; that the Teletext Pages are said to contain 'Rows'.</p>
+
+<p><font color="#0000FF"><strong>Row-Adaptive Transmission</strong></font>
+- Teletext transmission in which Rows containing no information
+are not transmitted. This reduces the access times of the system.
+The non-transmitted Rows are displayed as Rows of unboxed black
+spaces.</p>
+
+<p><font color="#0000FF"><strong>Separated Graphics Set</strong></font>
+- the set of 96 Display Characters comprising the 64 Separated
+Graphics Characters corresponding to the Contiguous Graphics
+Characters listed in columns 2a, 3a, 6a and 7a of table 3,
+together with the 32 Blast-Through Alphanumerics Characters of
+columns 4 and 5.</p>
+
+<p><font color="#0000FF"><strong>Separated Mode</strong></font> -
+the Display mode in which there is Background Colour boundary
+around and between the six cells of the Graphics Characters
+within the Character Rectangle (see figure 8).</p>
+
+<p><font color="#0000FF"><strong>Space</strong></font> - a
+Character Rectangle entirely filled by the background colours.</p>
+
+<p><font color="#0000FF"><strong>Subtitle Page</strong></font> -
+A Page in which all the information for the display is Boxed, and
+Control Bit C6 is set to allow this information to be
+automatically inset or added to the television picture.</p>
+
+<p><font color="#0000FF"><strong>Teletext</strong></font> - An
+information transmission system using the data and display
+formats described in sections 2 and 3 of this document.</p>
+
+<p><font color="#0000FF"><strong>Television Data Line</strong></font>
+See <a href="#data line"><strong>Data Line</strong></a>.</p>
+
+<p><font color="#0000FF"><strong>Time-Coded Page</strong></font>
+- In addition to a Magazine number and Page number a Page may be
+assigned a 'Time Code' of one of 3200 numbers arranged as two
+'Hours' digits and two 'Minutes' digits. This code may be used to
+selct one of many Pages, bearing the same Magazine and Page
+number, transmitted in sequence. When the transmission of each
+version of the page is isolated or infrequent this code may be
+made literally the Hours' digits and two 'Minutes' of the
+clock-time at which it is transmitted.</p>
+
+<p><font color="#0000FF"><strong>Time Display</strong></font> -
+the last eight characters of every Page Header are reserved for
+clock-time. A receiver may be arranged to display these
+characters from the Rolling Headers to give a clock-time display.</p>
+
+<hr size="1">
+
+<h2><font color="#0000FF">FIG 1. </font><a
+name="TELETEXT DATA LINES"><font color="#0000FF">TELETEXT DATA
+LINES</font></a></h2>
+
+<p><img src="ttx_spec_fig_01.gif" width="1064" height="410"></p>
+
+<p>* Insertion test signal</p>
+
+<hr size="1">
+
+<h2><font color="#0000FF">FIG 2. </font><a name="DATA LEVELS"><font
+color="#0000FF">DATA LEVELS</font></a></h2>
+
+<p><img src="ttx_spec_fig_02.gif" width="784" height="364"></p>
+
+<hr size="1">
+
+<h2><font color="#0000FF">FIG 3. </font><a name="DATA TIMING"><font
+color="#0000FF">DATA TIMING</font></a></h2>
+
+<p><img src="ttx_spec_fig_03.gif" width="442" height="349"></p>
+
+<hr size="1">
+
+<h2><font color="#0000FF">FIG 4. </font><a
+name="AN APPROXIMATE SPECTRUM OF A DATA PULSE"><font
+color="#0000FF">AN APPROXIMATE SPECTRUM OF A DATA PULSE</font></a><font
+color="#0000FF">* </font></h2>
+
+<p><img src="ttx_spec_fig_04a.gif" width="406" height="314"></p>
+
+<p>* based on practice current in September 1976</p>
+
+<hr size="1">
+
+<h2><font color="#0000FF">FIG 5. </font><a
+name="AN APPROXIMATE ONE-BIT DATA PULSE"><font color="#0000FF">AN
+APPROXIMATE ONE-BIT DATA PULSE</font></a><font color="#0000FF">*</font></h2>
+
+<h2><font color="#0000FF"><img src="ttx_spec_fig_05a.gif"
+width="411" height="314"></font></h2>
+
+<p>* based on practice current in September 1976</p>
+
+<hr size="1">
+
+<h2><font color="#0000FF">FIG 6. </font><a
+name="SYNCHRONISATION AND HAMMING CODES AT START OF PAGE HEADER AND ROW TRANSMISSIONS"><font
+color="#0000FF">SYNCHRONISATION AND HAMMING CODES AT START OF
+PAGE HEADER AND ROW TRANSMISSIONS </font></a></h2>
+
+<table border="1" cellpadding="4" bordercolor="#FFFFFF">
+<tr>
+<td align="right" bordercolor="#808080">Page Header (Row
+0)</td>
+<td rowspan="4" bgcolor="#FF00FF" bordercolor="#808080">Clock<br>
+Run-In</td>
+<td rowspan="4" bgcolor="#FF00FF" bordercolor="#808080">Clock<br>
+Run-In</td>
+<td rowspan="4" bgcolor="#FF00FF" bordercolor="#808080">Framing<br>
+Code</td>
+<td rowspan="4" colspan="2" bgcolor="#FF00FF"
+bordercolor="#808080">Magazine and<br>
+Row-<br>
+address<br>
+Group</td>
+<td align="center" bgcolor="#00FF00"
+bordercolor="#808080">Eight Hamming Codes peculiar to
+Page Header</td>
+<td bgcolor="#00FFFF" bordercolor="#808080">32 Characters</td>
+</tr>
+<tr>
+<td align="right" bordercolor="#808080">Row 1</td>
+<td align="center" rowspan="3" colspan="2"
+bgcolor="#00FFFF" bordercolor="#808080">40 Characters</td>
+</tr>
+<tr>
+<td align="right" bordercolor="#808080">Row 2</td>
+</tr>
+<tr>
+<td align="right" bordercolor="#808080">Row 3</td>
+</tr>
+</table>
+
+<p>M = Message Bits<br>
+P = Protection Bits<br>
+C = Control Bits</p>
+
+<table border="1" bordercolor="#FFFFFF">
+<tr>
+<td align="center" colspan="24" bordercolor="#808080">Synchronisation</td>
+<td align="center" colspan="16" bordercolor="#808080">Hamming
+Codes common to all Rows</td>
+</tr>
+<tr>
+<td align="center" colspan="16" bgcolor="#FF00FF"
+bordercolor="#808080">Clock Run-in Sequence</td>
+<td align="center" colspan="8" bgcolor="#FF00FF"
+bordercolor="#808080">Framing Code</td>
+<td align="center" colspan="6" bgcolor="#FF00FF"
+bordercolor="#808080">Magazine<br>
+Number</td>
+<td align="center" colspan="10" bgcolor="#FF00FF"
+bordercolor="#808080">Row<br>
+Address</td>
+</tr>
+<tr>
+<td align="center" colspan="8" bgcolor="#FF00FF"
+bordercolor="#808080">.Clock Run-in</td>
+<td align="center" colspan="8" bgcolor="#FF00FF"
+bordercolor="#808080">Clock Run-in</td>
+<td colspan="8" bgcolor="#FF00FF" bordercolor="#808080">&nbsp;</td>
+<td colspan="2" bgcolor="#FF00FF" bordercolor="#808080">2<sup>0</sup></td>
+<td colspan="2" bgcolor="#FF00FF" bordercolor="#808080">2<sup>1</sup></td>
+<td colspan="2" bgcolor="#FF00FF" bordercolor="#808080">2<sup>2</sup></td>
+<td colspan="2" bgcolor="#FF00FF" bordercolor="#808080">2<sup>0</sup></td>
+<td colspan="2" bgcolor="#FF00FF" bordercolor="#808080">2<sup>1</sup></td>
+<td colspan="2" bgcolor="#FF00FF" bordercolor="#808080">2<sup>2</sup></td>
+<td colspan="2" bgcolor="#FF00FF" bordercolor="#808080">2<sup>3</sup></td>
+<td colspan="2" bgcolor="#FF00FF" bordercolor="#808080">2<sup>4</sup></td>
+</tr>
+<tr>
+<td bgcolor="#FF00FF" bordercolor="#808080">1</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">0</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">1</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">0</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">1</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">0</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">1</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">0</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">1</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">0</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">1</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">0</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">1</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">0</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">1</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">0</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">1</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">1</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">1</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">0</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">0</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">1</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">0</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">0</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">P</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">M</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">P</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">M</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">P</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">M</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">P</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">M</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">P</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">M</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">P</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">M</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">P</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">M</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">P</td>
+<td bgcolor="#FF00FF" bordercolor="#808080">M</td>
+</tr>
+</table>
+
+<p>C<sub>4</sub> Erase. <br>
+C<sub>5</sub> Newsflash<br>
+C<sub>6</sub> Subtitle<br>
+C<sub>7</sub> Suppress Header<br>
+C<sub>8</sub> Update<br>
+C<sub>9</sub> Interrupted Sequence<br>
+C<sub>10</sub> Inhibit display<br>
+C<sub>11</sub> Magazine Serial<br>
+C<sub>12</sub>, C<sub>13</sub>, C<sub>14</sub> Unallocated</p>
+
+<table border="1" bordercolor="#FFFFFF">
+<tr>
+<td align="center" colspan="64" bordercolor="#808080">Eight
+Hamming Codes peculiar to Page Header</td>
+<td colspan="8">&nbsp;</td>
+</tr>
+<tr>
+<td align="center" colspan="16" bgcolor="#00FF00"
+bordercolor="#808080">Page<br>
+number</td>
+<td align="center" colspan="14" bgcolor="#00FF00"
+bordercolor="#808080">Time Code<br>
+'Minutes'</td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">&nbsp;</td>
+<td align="center" colspan="12" bgcolor="#00FF00"
+bordercolor="#808080">Time Code<br>
+'Hours'</td>
+<td align="center" colspan="20" bgcolor="#00FF00"
+bordercolor="#808080">Control</td>
+<td align="center" colspan="8" bgcolor="#00FFFF"
+bordercolor="#808080">First character<br>
+of Page Header</td>
+</tr>
+<tr>
+<td align="center" colspan="8" bgcolor="#00FF00"
+bordercolor="#808080">Units</td>
+<td align="center" colspan="8" bgcolor="#00FF00"
+bordercolor="#808080">Tens</td>
+<td align="center" colspan="8" bgcolor="#00FF00"
+bordercolor="#808080">Units</td>
+<td align="center" colspan="6" bgcolor="#00FF00"
+bordercolor="#808080">Tens</td>
+<td align="center" colspan="2" bgcolor="#00FF00"
+bordercolor="#808080">&nbsp;</td>
+<td align="center" colspan="8" bgcolor="#00FF00"
+bordercolor="#808080">Units</td>
+<td align="center" colspan="4" bgcolor="#00FF00"
+bordercolor="#808080">Tens</td>
+<td align="center" colspan="10" bgcolor="#00FF00"
+bordercolor="#808080">Group A</td>
+<td align="center" colspan="10" bgcolor="#00FF00"
+bordercolor="#808080">Group B</td>
+<td colspan="8" bgcolor="#00FFFF" bordercolor="#808080">&nbsp;</td>
+</tr>
+<tr>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>0</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>1</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>2</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>3</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>0</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>1</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>2</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>3</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>0</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>1</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>2</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>3</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>0</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>1</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>2</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">C<sub>4</sub></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>0</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>1</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>2</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>3</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>0</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">2<sup>1</sup></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">C<sub>5</sub></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">C<sub>6</sub></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">C<sub>7</sub></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">C<sub>8</sub></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">C<sub>9</sub></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">C<sub>10</sub></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">C<sub>11</sub></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">C<sub>12</sub></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">C<sub>13</sub></td>
+<td colspan="2" bgcolor="#00FF00" bordercolor="#808080">C<sub>14</sub></td>
+<td colspan="8" bgcolor="#00FFFF" bordercolor="#808080">&nbsp;</td>
+</tr>
+<tr>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FF00" bordercolor="#808080">P</td>
+<td bgcolor="#00FF00" bordercolor="#808080">M</td>
+<td bgcolor="#00FFFF" bordercolor="#808080">M</td>
+<td bgcolor="#00FFFF" bordercolor="#808080">M</td>
+<td bgcolor="#00FFFF" bordercolor="#808080">M</td>
+<td bgcolor="#00FFFF" bordercolor="#808080">M</td>
+<td bgcolor="#00FFFF" bordercolor="#808080">M</td>
+<td bgcolor="#00FFFF" bordercolor="#808080">M</td>
+<td bgcolor="#00FFFF" bordercolor="#808080">M</td>
+<td bgcolor="#00FFFF" bordercolor="#808080">P</td>
+</tr>
+</table>
+
+<p><img src="ttx_spec_fig_06.gif" width="1143" height="743"></p>
+
+<p>&nbsp;</p>
+
+<hr size="1">
+
+<h2><font color="#0000FF">FIG 7a. </font><a
+name="PAGE HEADER FORMAT"><font color="#0000FF">PAGE HEADER
+FORMAT </font></a></h2>
+
+<table border="1" cellpadding="3" cellspacing="0">
+<tr>
+<td align="center" colspan="3"><font color="#0000FF"><strong>Sync
+<br>
+bytes</strong></font></td>
+<td align="center" colspan="10"><font color="#0000FF"><strong>Address
+and <br>
+Control bytes</strong></font></td>
+<td align="center" colspan="24"><font color="#0000FF"><strong>Coded
+Characters for display</strong></font></td>
+<td colspan="8">&nbsp;</td>
+</tr>
+<tr>
+<td rowspan="2">C<br>
+R</td>
+<td rowspan="2">C<br>
+R</td>
+<td rowspan="2">F<br>
+C</td>
+<td rowspan="2">M<br>
+R</td>
+<td rowspan="2">A<br>
+G</td>
+<td rowspan="2">P<br>
+U</td>
+<td rowspan="2">P<br>
+T</td>
+<td rowspan="2">M<br>
+U</td>
+<td rowspan="2">M<br>
+T</td>
+<td rowspan="2">H<br>
+U</td>
+<td rowspan="2">H<br>
+T</td>
+<td rowspan="2">C<br>
+A</td>
+<td rowspan="2">C<br>
+B</td>
+<td>O</td>
+<td>R</td>
+<td>A</td>
+<td>C</td>
+<td>L</td>
+<td>E</td>
+<td>&nbsp;</td>
+<td>3</td>
+<td>0</td>
+<td>9</td>
+<td>&nbsp;</td>
+<td>T</td>
+<td>h</td>
+<td>u</td>
+<td>19</td>
+<td>&nbsp;</td>
+<td>F</td>
+<td>e</td>
+<td>b</td>
+<td>&nbsp;</td>
+<td>I</td>
+<td>T</td>
+<td>V</td>
+<td>&nbsp;</td>
+<td rowspan="2">&nbsp;</td>
+<td rowspan="2">1</td>
+<td rowspan="2">4</td>
+<td rowspan="2">0</td>
+<td rowspan="2">5</td>
+<td rowspan="2">:</td>
+<td rowspan="2">3</td>
+<td rowspan="2">4</td>
+</tr>
+<tr>
+<td>C</td>
+<td>E</td>
+<td>E</td>
+<td>F</td>
+<td>A</td>
+<td>X</td>
+<td>&nbsp;</td>
+<td>P</td>
+<td>3</td>
+<td>0</td>
+<td>9</td>
+<td>&nbsp;</td>
+<td>T</td>
+<td>h</td>
+<td>u</td>
+<td>1</td>
+<td>9</td>
+<td>&nbsp;</td>
+<td>F</td>
+<td>e</td>
+<td>b</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td colspan="3">&nbsp;</td>
+<td colspan="10">&nbsp;</td>
+<td align="center" colspan="24">This block of 24
+characters will normally <br>
+contain the type of information shown.<br>
+The format is not fixed and will be <br>
+decided by the editors.<br>
+Two possible examples are shown</td>
+<td align="center" colspan="8">This block of 8 characters<br>
+is reserved for the <br>
+display of clock-time</td>
+</tr>
+</table>
+
+<hr size="1">
+
+<h2><font color="#0000FF">FIG 7b. </font><a name="ROW FORMAT"><font
+color="#0000FF">ROW FORMAT</font></a><font color="#0000FF"> </font></h2>
+
+<table border="1" cellpadding="3" cellspacing="0">
+<tr>
+<td align="center" colspan="3"><font color="#0000FF"><strong>Sync
+<br>
+bytes</strong></font></td>
+<td align="center" colspan="2"><font color="#0000FF"><strong>Address<br>
+bytes</strong></font></td>
+<td align="center" colspan="40"><font color="#0000FF"><strong>40
+Coded Characters for display</strong></font></td>
+</tr>
+<tr>
+<td>C<br>
+R</td>
+<td>C<br>
+R</td>
+<td>F<br>
+C</td>
+<td>M<br>
+R</td>
+<td>A<br>
+G</td>
+<td>N</td>
+<td>o</td>
+<td>w</td>
+<td>&nbsp;</td>
+<td>i</td>
+<td>s</td>
+<td bgcolor="#FFFF00">&nbsp;</td>
+<td bgcolor="#00FF00">t</td>
+<td bgcolor="#00FFFF">h</td>
+<td>e</td>
+<td>&nbsp;</td>
+<td>t</td>
+<td>i</td>
+<td>m</td>
+<td>e</td>
+<td>&nbsp;</td>
+<td>f</td>
+<td>o</td>
+<td>r</td>
+<td>&nbsp;</td>
+<td>a</td>
+<td>l</td>
+<td>l</td>
+<td>&nbsp;</td>
+<td>g</td>
+<td>o</td>
+<td>o</td>
+<td>d</td>
+<td>&nbsp;</td>
+<td>m</td>
+<td>e</td>
+<td>n</td>
+<td>&nbsp;</td>
+<td>t</td>
+<td>o</td>
+<td>&nbsp;</td>
+<td>c</td>
+<td>o</td>
+<td>m</td>
+<td>e</td>
+</tr>
+</table>
+
+<blockquote>
+<table border="1" cellpadding="3" cellspacing="0">
+<tr>
+<td bgcolor="#FFFF00">0</td>
+<td bgcolor="#FFFF00">0</td>
+<td bgcolor="#FFFF00">0</td>
+<td bgcolor="#FFFF00">0</td>
+<td bgcolor="#FFFF00">0</td>
+<td bgcolor="#FFFF00">1</td>
+<td bgcolor="#FFFF00">0</td>
+<td bgcolor="#FFFF00">0</td>
+<td bgcolor="#00FF00">0</td>
+<td bgcolor="#00FF00">0</td>
+<td bgcolor="#00FF00">1</td>
+<td bgcolor="#00FF00">0</td>
+<td bgcolor="#00FF00">1</td>
+<td bgcolor="#00FF00">1</td>
+<td bgcolor="#00FF00">1</td>
+<td bgcolor="#00FF00">1</td>
+<td bgcolor="#00FFFF">0</td>
+<td bgcolor="#00FFFF">0</td>
+<td bgcolor="#00FFFF">0</td>
+<td bgcolor="#00FFFF">1</td>
+<td bgcolor="#00FFFF">0</td>
+<td bgcolor="#00FFFF">1</td>
+<td bgcolor="#00FFFF">1</td>
+<td bgcolor="#00FFFF">0</td>
+</tr>
+</table>
+</blockquote>
+
+<hr size="1">
+
+<h2><font color="#0000FF">FIG 8. </font><a
+name="EXAMPLES OF ALPHANUMERIC AND GRAPHIC DISPLAYS"><font
+color="#0000FF">EXAMPLES OF ALPHANUMERIC AND GRAPHIC DISPLAYS</font></a><font
+color="#0000FF"> </font></h2>
+
+<table border="1" cellpadding="7" cellspacing="0" width="100%"
+bgcolor="#C0C0C0">
+<tr>
+<td align="center" valign="bottom" width="25%">Alphanumeric
+and <br>
+Graphics 'Space' <br>
+Character<br>
+00000100<p><img src="sixel00.gif" width="80" height="100"></p>
+</td>
+<td align="center" valign="bottom" width="25%">Alphanumeric
+<br>
+Character<br>
+10110101<p><img src="x2D.gif" width="80" height="100"></p>
+</td>
+<td align="center" valign="bottom" width="25%">Alphanumeric
+or <br>
+Blast-Through <br>
+Character<br>
+00010011<p><img src="x49.gif" width="80" height="100"></p>
+</td>
+<td align="center" valign="bottom" width="25%">Alphanumeric
+<br>
+Character<br>
+11111110<p><img src="x7F.gif" width="80" height="100"></p>
+</td>
+</tr>
+<tr>
+<td align="center" valign="bottom" width="25%">Contiguous<br>
+Graphics <br>
+Character<br>
+01101110<p><img src="sixel54a.gif" width="80"
+height="100"></p>
+</td>
+<td align="center" valign="bottom" width="25%">Separated<br>
+Graphics <br>
+Character<br>
+01101110<p><img src="sixel54b.gif" width="80"
+height="100"></p>
+</td>
+<td align="center" valign="bottom" width="25%">Separated<br>
+Graphics <br>
+Character<br>
+11111110<p><img src="sixel63b.gif" width="80"
+height="100"></p>
+</td>
+<td align="center" valign="bottom" width="25%">Contiguous<br>
+Graphics <br>
+Character<br>
+11111110<p><img src="sixel63a.gif" width="80"
+height="100"></p>
+</td>
+</tr>
+</table>
+
+<p>Key: White = background colour, Black = display colour</p>
+
+<p>Note: Character Bytes are listed as transmitted from LSB to
+MSB</p>
+
+<hr size="1">
+
+<h2><font color="#0000FF">FIG 9. </font><a
+name="IDEALISED OPERATION OF FRAMING CODE"><font color="#0000FF">IDEALISED
+OPERATION OF FRAMING CODE</font></a></h2>
+
+<blockquote>
+<table border="1" cellpadding="2" bgcolor="#FFFFFF"
+bordercolor="#FFFFFF">
+<tr>
+<td colspan="5"><tt>&lt;-- Movement of data stream</tt></td>
+</tr>
+<tr>
+<td>&nbsp;</td>
+<td align="center" bgcolor="#C0C0C0"
+bordercolor="#000000"><tt>Data in<br>
+shift<br>
+register</tt></td>
+<td colspan="3"><tt>Number of corresponding bits</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>.......0</tt></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>10101010</tt></td>
+<td colspan="2"><tt>4</tt></td>
+<td align="center" rowspan="12" bordercolor="#808080"><tt>Example
+with <br>
+12-bit<br>
+Run-In code<br>
+moving through<br>
+shift register</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>......01</tt></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>01010101</tt></td>
+<td colspan="2"><tt>4</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>.....010</tt></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>10101010</tt></td>
+<td colspan="2"><tt>4</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>....0101</tt></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>01010101</tt></td>
+<td colspan="2"><tt>4</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>...01010</tt></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>10101010</tt></td>
+<td colspan="2"><tt>4</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>..010101</tt></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>0101010</tt><strong><tt>1</tt></strong></td>
+<td><tt>4</tt></td>
+<td align="center" rowspan="7" bordercolor="#808080"><tt>Framing
+code<br>
+moving into<br>
+shift register</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>.0101010</tt></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>101010</tt><strong><tt>11</tt></strong></td>
+<td><tt>4</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>01010101</tt></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>01010</tt><strong><tt>111</tt></strong></td>
+<td><tt>3</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>10101010</tt></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>1010</tt><strong><tt>1110</tt></strong></td>
+<td><tt>3</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>01010101</tt></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>010</tt><strong><tt>11100</tt></strong></td>
+<td><tt>5</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>10101010</tt></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>10</tt><strong><tt>111001</tt></strong></td>
+<td><tt>3</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>01010101</tt></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>0</tt><strong><tt>1110010</tt></strong></td>
+<td><tt>4</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>10101010</tt></td>
+<td bgcolor="#00FF00" bordercolor="#000000"><strong><tt>11100100</tt></strong></td>
+<td><strong><tt>8</tt></strong></td>
+<td align="center" colspan="2" bordercolor="#808080"><tt>Framing
+code in shift register</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>0101010</tt><strong><tt>1</tt></strong></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><strong><tt>1100100</tt></strong><tt>X</tt></td>
+<td colspan="3"><tt>&lt;= 5</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>101010</tt><strong><tt>11</tt></strong></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><strong><tt>100100</tt></strong><tt>XX</tt></td>
+<td colspan="3"><tt>&lt;= 4</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>01010</tt><strong><tt>111</tt></strong></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><strong><tt>00100</tt></strong><tt>XXX</tt></td>
+<td colspan="3"><tt>&lt;= 6</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>1010</tt><strong><tt>1110</tt></strong></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><strong><tt>0100</tt></strong><tt>XXXX</tt></td>
+<td colspan="3"><tt>&lt;= 6</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>010</tt><strong><tt>11100</tt></strong></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><strong><tt>100</tt></strong><tt>XXXXX</tt></td>
+<td colspan="3"><tt>&lt;= 6</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>10</tt><strong><tt>111001</tt></strong></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><strong><tt>00</tt></strong><tt>XXXXXX</tt></td>
+<td colspan="3"><tt>&lt;= 6</tt></td>
+</tr>
+<tr>
+<td align="right"><tt>0</tt><strong><tt>1110010</tt></strong></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><strong><tt>0</tt></strong><tt>XXXXXXX</tt></td>
+<td colspan="3"><tt>&lt;= 6</tt></td>
+</tr>
+<tr>
+<td align="right"><strong><tt>11100100</tt></strong></td>
+<td bgcolor="#C0C0C0" bordercolor="#000000"><tt>XXXXXXXX</tt></td>
+<td colspan="3"><tt>&lt;= 7</tt></td>
+</tr>
+<tr>
+<td>&nbsp;</td>
+<td><tt>^^^^^^^^<br>
+||||||||</tt></td>
+<td colspan="3">&nbsp;</td>
+</tr>
+<tr>
+<td>&nbsp;</td>
+<td bgcolor="#00FFFF" bordercolor="#000000"><strong><tt>11100100</tt></strong></td>
+<td colspan="3" bordercolor="#808080"><tt>Test word
+for comparison with <br>
+data in shift register</tt></td>
+</tr>
+</table>
+</blockquote>
+
+<p>X's represent bits in the control and row address group</p>
+
+<p>For clarity the framing code groups shown thus.</p>
+
+<p>Diagram showing contents of shift register in each clock
+period.</p>
+
+<hr size="1">
+
+<h2><font color="#0000FF">TABLE 1A. </font><a
+name="HAMMING CODE BYTES"><font color="#0000FF">HAMMING CODE
+BYTES</font></a></h2>
+
+<blockquote>
+<table border="1" cellspacing="0">
+<tr>
+<td align="center" colspan="8" bgcolor="#00FF00">MESSAGE
+BITS</td>
+</tr>
+<tr>
+<td bgcolor="#00FF00">b8</td>
+<td bgcolor="#00FFFF">b7</td>
+<td bgcolor="#00FF00">b6</td>
+<td bgcolor="#00FFFF">b5</td>
+<td bgcolor="#00FF00">b4</td>
+<td bgcolor="#00FFFF">b3</td>
+<td bgcolor="#00FF00">b2</td>
+<td bgcolor="#00FFFF">b1</td>
+</tr>
+<tr>
+<td valign="top" bgcolor="#00FF00">0<br>
+0<br>
+0<br>
+0<br>
+0<br>
+0<br>
+0<br>
+0<br>
+1<br>
+1<br>
+1<br>
+1<br>
+1<br>
+1<br>
+1<br>
+1</td>
+<td valign="top" bgcolor="#00FFFF">0<br>
+0<br>
+1<br>
+1<br>
+1<br>
+1<br>
+0<br>
+0<br>
+1<br>
+1<br>
+0<br>
+0<br>
+0<br>
+0<br>
+1<br>
+1</td>
+<td valign="top" bgcolor="#00FF00">0<br>
+0<br>
+0<br>
+0<br>
+1<br>
+1<br>
+1<br>
+1<br>
+0<br>
+0<br>
+0<br>
+0<br>
+1<br>
+1<br>
+1<br>
+1</td>
+<td valign="top" bgcolor="#00FFFF">1<br>
+0<br>
+0<br>
+1<br>
+0<br>
+1<br>
+1<br>
+0<br>
+1<br>
+0<br>
+0<br>
+1<br>
+0<br>
+1<br>
+1<br>
+0</td>
+<td valign="top" bgcolor="#00FF00">0<br>
+0<br>
+1<br>
+1<br>
+0<br>
+0<br>
+1<br>
+1<br>
+0<br>
+0<br>
+1<br>
+1<br>
+0<br>
+0<br>
+1<br>
+1</td>
+<td valign="top" bgcolor="#00FFFF">1<br>
+0<br>
+0<br>
+1<br>
+1<br>
+0<br>
+0<br>
+1<br>
+0<br>
+1<br>
+1<br>
+0<br>
+0<br>
+1<br>
+1<br>
+0</td>
+<td valign="top" bgcolor="#00FF00">0<br>
+1<br>
+0<br>
+1<br>
+0<br>
+1<br>
+0<br>
+1<br>
+0<br>
+1<br>
+0<br>
+1<br>
+0<br>
+1<br>
+0<br>
+1</td>
+<td valign="top" bgcolor="#00FFFF">1<br>
+0<br>
+1<br>
+0<br>
+0<br>
+1<br>
+0<br>
+1<br>
+0<br>
+1<br>
+0<br>
+1<br>
+1<br>
+0<br>
+1<br>
+0</td>
+</tr>
+<tr>
+<td align="center" colspan="8" bgcolor="#00FFFF">PROTECTION
+BITS</td>
+</tr>
+</table>
+</blockquote>
+
+<hr size="1">
+
+<h2><font color="#0000FF">TABLE 1B. </font><a
+name="HAMMING CODES - TESTS FOR ODD PARITY"><font color="#0000FF">HAMMING
+CODES - TESTS FOR ODD PARITY</font></a></h2>
+
+<blockquote>
+<table border="1" cellspacing="0">
+<tr>
+<td>&nbsp;</td>
+<td bgcolor="#00FF00">b8</td>
+<td bgcolor="#00FFFF">b7</td>
+<td bgcolor="#00FF00">b6</td>
+<td bgcolor="#00FFFF">b5</td>
+<td bgcolor="#00FF00">b4</td>
+<td bgcolor="#00FFFF">b3</td>
+<td bgcolor="#00FF00">b2</td>
+<td bgcolor="#00FFFF">b1</td>
+</tr>
+<tr>
+<td>A</td>
+<td>*</td>
+<td>&nbsp;</td>
+<td>*</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>*</td>
+<td>*</td>
+</tr>
+<tr>
+<td>B</td>
+<td>*</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>*</td>
+<td>*</td>
+<td>*</td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>C</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>*</td>
+<td>*</td>
+<td>*</td>
+<td>&nbsp;</td>
+<td>*</td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>D</td>
+<td>*</td>
+<td>*</td>
+<td>*</td>
+<td>*</td>
+<td>*</td>
+<td>*</td>
+<td>*</td>
+<td>*</td>
+</tr>
+</table>
+<p>* Tested bits</p>
+</blockquote>
+
+<hr size="1">
+
+<h2><font color="#0000FF">TABLE 1c. </font><a
+name="HAMMING CODES - DECODING ACTION"><font color="#0000FF">HAMMING
+CODES - DECODING ACTION</font></a></h2>
+
+<blockquote>
+<table border="1" cellpadding="3" cellspacing="0">
+<tr>
+<td align="center" colspan="2"><font color="#0000FF"><strong>RESULTS
+OF<br>
+PARITY TESTS</strong></font></td>
+<td align="center" rowspan="2"><font color="#0000FF"><strong>INFERENCE</strong></font></td>
+<td align="center" rowspan="2"><font color="#0000FF"><strong>ACTION</strong></font></td>
+</tr>
+<tr>
+<td align="center"><font color="#0000FF"><strong>A,B,C</strong></font></td>
+<td align="center"><font color="#0000FF"><strong>D</strong></font></td>
+</tr>
+<tr>
+<td>All Correct</td>
+<td>Correct</td>
+<td>No errors</td>
+<td>Accept message bits</td>
+</tr>
+<tr>
+<td>All Correct</td>
+<td>Not Correct</td>
+<td>Error in b7</td>
+<td>Accept message bits</td>
+</tr>
+<tr>
+<td>Not All Correct</td>
+<td>Correct</td>
+<td>Multiple errors</td>
+<td>Reject message bits</td>
+</tr>
+<tr>
+<td>Not All Correct</td>
+<td>Not Correct</td>
+<td>Single error</td>
+<td>Refer to Table 1b to identify error.<br>
+Correct error if in message bit</td>
+</tr>
+</table>
+</blockquote>
+
+<hr size="1">
+
+<h2><font color="#0000FF">2. </font><a
+name="DISPLAY MODES AND CONTROL CHARACTERS"><font color="#0000FF">DISPLAY
+MODES AND CONTROL CHARACTERS</font></a></h2>
+
+<table border="1" cellpadding="5" cellspacing="0">
+<tr>
+<td colspan="2"><font color="#0000FF"><strong>DISPLAY
+MODE</strong></font></td>
+<td><font color="#0000FF"><strong>SET AT</strong></font></td>
+<td><font color="#0000FF"><strong>SET AFTER</strong></font></td>
+<td colspan="2"><font color="#0000FF"><strong>DISPLAY
+MODE</strong></font></td>
+<td><font color="#0000FF"><strong>SET AT</strong></font></td>
+<td><font color="#0000FF"><strong>SET AFTER</strong></font></td>
+<td><font color="#0000FF"><strong>SEE SECTION</strong></font></td>
+</tr>
+<tr>
+<td colspan="2">ALPHANUMERICS</td>
+<td>Row Start</td>
+<td>0/1, 0/2, 0/3, <br>
+0/4, 0/5, 0/6, 0/7</td>
+<td colspan="2">GRAPHICS</td>
+<td>-</td>
+<td>1/1, 1/2, 1/3,<br>
+1/4, 1/5, 1/6, 1/7</td>
+<td>3.1.1</td>
+</tr>
+<tr>
+<td colspan="2">CONTIGUOUS</td>
+<td>Row Start, 1/9 *</td>
+<td>1/9 *</td>
+<td colspan="2">SEPARATED</td>
+<td>1/10 *</td>
+<td>1/10 *</td>
+<td>3.1.1</td>
+</tr>
+<tr>
+<td rowspan="3">DISPLAY<br>
+COLOUR</td>
+<td>includes<br>
+RED</td>
+<td>Row Start</td>
+<td>0/1, 0/3, 0/5, 0/7, <br>
+1/1, 1/3, 1/6, 1/7</td>
+<td rowspan="3">DISPLAY<br>
+COLOUR</td>
+<td>excludes<br>
+RED</td>
+<td>-</td>
+<td>0/2, 0/4, 0/6<br>
+1/2, 1/4, 1/6</td>
+<td rowspan="3">3.1.2</td>
+</tr>
+<tr>
+<td>includes<br>
+GREEN</td>
+<td>Row Start</td>
+<td>0/2, 0/3, 0/6, 0/7, <br>
+1/2, 1/3, 1/6, 1/7</td>
+<td>excludes<br>
+GREEN</td>
+<td>-</td>
+<td>0/1, 0/4, 0/5<br>
+1/1, 1/4, 1/5</td>
+</tr>
+<tr>
+<td>includes<br>
+BLUE</td>
+<td>Row Start</td>
+<td>0/4, 0/5, 0/6, 0/7, <br>
+1/4, 1/5, 1/6, 1/7</td>
+<td>excludes<br>
+BLUE</td>
+<td>-</td>
+<td>0/1, 0/2, 0/3<br>
+1/1, 1/2, 1/3</td>
+</tr>
+<tr>
+<td colspan="2">BLACK BACKGROUND</td>
+<td>Row Start, 1/12</td>
+<td>-</td>
+<td colspan="2">NEW BACKGROUND</td>
+<td>1/13 **</td>
+<td>&nbsp;</td>
+<td>3.1.3</td>
+</tr>
+<tr>
+<td colspan="2">REVEAL</td>
+<td>Row Start,<br>
+User Control ***</td>
+<td>0/1, 0/2, 0/3, <br>
+0/4, 0/5, 0/6, 0/7, <br>
+1/1, 1/2, 1/3<br>
+1/4, 1/5, 1/6, 1/7</td>
+<td colspan="2">CONCEAL</td>
+<td>1/8</td>
+<td>-</td>
+<td>3.1.4</td>
+</tr>
+<tr>
+<td colspan="2">STEADY</td>
+<td>Row Start</td>
+<td>-</td>
+<td colspan="2">FLASH</td>
+<td>-</td>
+<td>0/8</td>
+<td>3.1.4</td>
+</tr>
+<tr>
+<td colspan="2">UNBOXED</td>
+<td>Row Start ****</td>
+<td>0/10 ****</td>
+<td colspan="2">BOXED</td>
+<td>0/11 ****</td>
+<td>0/1 ****</td>
+<td>3.1.5</td>
+</tr>
+<tr>
+<td colspan="2">NORMAL HEIGHT</td>
+<td>Row Start</td>
+<td>-</td>
+<td colspan="2">DOUBLE HEIGHT</td>
+<td>-</td>
+<td>0/13</td>
+<td>3.1.6</td>
+</tr>
+<tr>
+<td colspan="2">RELEASE</td>
+<td>Row Start</td>
+<td>1/15</td>
+<td colspan="2">HOLD</td>
+<td>1/14</td>
+<td>-</td>
+<td>3.1.7</td>
+</tr>
+</table>
+
+<p>* these codes may take effect 'at' or 'after' their occurrence<br>
+** whenever this code occurs the Display Colour is adopted as the
+New Background colour<br>
+*** the Reveal mode may be maintained throughout a page by a user
+control<br>
+**** two consecutive code are transmitted, the mode changes
+between them</p>
+
+<hr size="1">
+
+<h2><font color="#0000FF">TABLE 3. </font><a
+name="TELETEXT CHARACTER CODES"><font color="#0000FF">TELETEXT
+CHARACTER CODES </font></a></h2>
+
+<table border="1" cellpadding="3" cellspacing="0"
+bgcolor="#C0C0C0">
+<tr>
+<td>&nbsp;</td>
+<td align="right">b7..5</td>
+<td>000</td>
+<td>001</td>
+<td colspan="2">010</td>
+<td colspan="2">011</td>
+<td>100</td>
+<td>101</td>
+<td colspan="2">110</td>
+<td colspan="2">111</td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>b4..1</td>
+<td align="right">&nbsp;</td>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>2a</td>
+<td>3</td>
+<td>3a</td>
+<td>4</td>
+<td>5</td>
+<td>6</td>
+<td>6a</td>
+<td>7</td>
+<td>7a</td>
+<td>&lt;- Col</td>
+</tr>
+<tr>
+<td>0000</td>
+<td align="right">0</td>
+<td><u>NUL</u>(1)</td>
+<td><u>DLE</u>(1)</td>
+<td align="center">&nbsp;</td>
+<td align="center"><img src="sixel00.gif" width="12"
+height="18"></td>
+<td align="center">0</td>
+<td align="center"><img src="sixel16.gif" width="12"
+height="18"></td>
+<td align="center">@</td>
+<td align="center">P</td>
+<td align="center">&nbsp;</td>
+<td align="center"><img src="sixel32.gif" width="12"
+height="18"></td>
+<td align="center">p</td>
+<td align="center"><img src="sixel48.gif" width="12"
+height="18"></td>
+<td align="center" rowspan="16">&nbsp;</td>
+</tr>
+<tr>
+<td>0001</td>
+<td align="right">1</td>
+<td>Alpha Red</td>
+<td>Graphics Red</td>
+<td align="center">!</td>
+<td align="center"><img src="sixel01.gif" width="12"
+height="18"></td>
+<td align="center">1</td>
+<td align="center"><img src="sixel17.gif" width="12"
+height="18"></td>
+<td align="center">A</td>
+<td align="center">Q</td>
+<td align="center">a</td>
+<td align="center"><img src="sixel33.gif" width="12"
+height="18"></td>
+<td align="center">q</td>
+<td align="center"><img src="sixel49.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>0010</td>
+<td align="right">2</td>
+<td>Alpha Green</td>
+<td>Graphics Green</td>
+<td align="center">&quot;</td>
+<td align="center"><img src="sixel02.gif" width="12"
+height="18"></td>
+<td align="center">2</td>
+<td align="center"><img src="sixel18.gif" width="12"
+height="18"></td>
+<td align="center">B</td>
+<td align="center">R</td>
+<td align="center">b</td>
+<td align="center"><img src="sixel34.gif" width="12"
+height="18"></td>
+<td align="center">r</td>
+<td align="center"><img src="sixel50.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>0011</td>
+<td align="right">3</td>
+<td>Alpha Yellow</td>
+<td>Graphics Yellow</td>
+<td align="center">£</td>
+<td align="center"><img src="sixel03.gif" width="12"
+height="18"></td>
+<td align="center">3</td>
+<td align="center"><img src="sixel19.gif" width="12"
+height="18"></td>
+<td align="center">C</td>
+<td align="center">S</td>
+<td align="center">c</td>
+<td align="center"><img src="sixel35.gif" width="12"
+height="18"></td>
+<td align="center">s</td>
+<td align="center"><img src="sixel51.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>0100</td>
+<td align="right">4</td>
+<td>Alpha Blue</td>
+<td>Graphics Blue</td>
+<td align="center">$</td>
+<td align="center"><img src="sixel04.gif" width="12"
+height="18"></td>
+<td align="center">4</td>
+<td align="center"><img src="sixel20.gif" width="12"
+height="18"></td>
+<td align="center">D</td>
+<td align="center">T</td>
+<td align="center">d</td>
+<td align="center"><img src="sixel36.gif" width="12"
+height="18"></td>
+<td align="center">t</td>
+<td align="center"><img src="sixel52.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>0101</td>
+<td align="right">5</td>
+<td>Alpha Magenta</td>
+<td>Graphics Magenta</td>
+<td align="center">%</td>
+<td align="center"><img src="sixel05.gif" width="12"
+height="18"></td>
+<td align="center">5</td>
+<td align="center"><img src="sixel21.gif" width="12"
+height="18"></td>
+<td align="center">E</td>
+<td align="center">U</td>
+<td align="center">e</td>
+<td align="center"><img src="sixel37.gif" width="12"
+height="18"></td>
+<td align="center">u</td>
+<td align="center"><img src="sixel53.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>0110</td>
+<td align="right">6</td>
+<td>Alpha Cyan</td>
+<td>Graphics Cyan</td>
+<td align="center">&amp;</td>
+<td align="center"><img src="sixel06.gif" width="12"
+height="18"></td>
+<td align="center">6</td>
+<td align="center"><img src="sixel22.gif" width="12"
+height="18"></td>
+<td align="center">F</td>
+<td align="center">V</td>
+<td align="center">f</td>
+<td align="center"><img src="sixel38.gif" width="12"
+height="18"></td>
+<td align="center">v</td>
+<td align="center"><img src="sixel54.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>0111</td>
+<td align="right">7</td>
+<td>Alpha White (2)</td>
+<td>Graphics White (2)</td>
+<td align="center">'</td>
+<td align="center"><img src="sixel07.gif" width="12"
+height="18"></td>
+<td align="center">7</td>
+<td align="center"><img src="sixel23.gif" width="12"
+height="18"></td>
+<td align="center">G</td>
+<td align="center">W</td>
+<td align="center">g</td>
+<td align="center"><img src="sixel39.gif" width="12"
+height="18"></td>
+<td align="center">w</td>
+<td align="center"><img src="sixel55.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>1000</td>
+<td align="right">8</td>
+<td>Flash</td>
+<td>Conceal display</td>
+<td align="center">(</td>
+<td align="center"><img src="sixel08.gif" width="12"
+height="18"></td>
+<td align="center">8</td>
+<td align="center"><img src="sixel24.gif" width="12"
+height="18"></td>
+<td align="center">H</td>
+<td align="center">X</td>
+<td align="center">h</td>
+<td align="center"><img src="sixel40.gif" width="12"
+height="18"></td>
+<td align="center">x</td>
+<td align="center"><img src="sixel56.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>1001</td>
+<td align="right">9</td>
+<td>Steady (2)</td>
+<td>Contiguous Gfx (2)</td>
+<td align="center">)</td>
+<td align="center"><img src="sixel09.gif" width="12"
+height="18"></td>
+<td align="center">9</td>
+<td align="center"><img src="sixel25.gif" width="12"
+height="18"></td>
+<td align="center">I</td>
+<td align="center">Y</td>
+<td align="center">i</td>
+<td align="center"><img src="sixel41.gif" width="12"
+height="18"></td>
+<td align="center">y</td>
+<td align="center"><img src="sixel57.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>1010</td>
+<td align="right">10</td>
+<td>End Box (2)</td>
+<td>Separated Gfx</td>
+<td align="center">*</td>
+<td align="center"><img src="sixel10.gif" width="12"
+height="18"></td>
+<td align="center">:</td>
+<td align="center"><img src="sixel26.gif" width="12"
+height="18"></td>
+<td align="center">J</td>
+<td align="center">Z</td>
+<td align="center">j</td>
+<td align="center"><img src="sixel42.gif" width="12"
+height="18"></td>
+<td align="center">z</td>
+<td align="center"><img src="sixel58.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>1011</td>
+<td align="right">11</td>
+<td>Start Box</td>
+<td>ESC (1)</td>
+<td align="center">+</td>
+<td align="center"><img src="sixel11.gif" width="12"
+height="18"></td>
+<td align="center">;</td>
+<td align="center"><img src="sixel27.gif" width="12"
+height="18"></td>
+<td align="center">K</td>
+<td align="center"><img src="larr.gif" width="12"
+height="18"></td>
+<td align="center">k</td>
+<td align="center"><img src="sixel43.gif" width="12"
+height="18"></td>
+<td align="center">¼</td>
+<td align="center"><img src="sixel59.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>1100</td>
+<td align="right">12</td>
+<td>Normal height (2)</td>
+<td>Black Background (2)</td>
+<td align="center">,</td>
+<td align="center"><img src="sixel12.gif" width="12"
+height="18"></td>
+<td align="center">&lt;</td>
+<td align="center"><img src="sixel28.gif" width="12"
+height="18"></td>
+<td align="center">L</td>
+<td align="center">½</td>
+<td align="center">l</td>
+<td align="center"><img src="sixel44.gif" width="12"
+height="18"></td>
+<td align="center">||</td>
+<td align="center"><img src="sixel60.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>1101</td>
+<td align="right">13</td>
+<td>Double height</td>
+<td>New Background</td>
+<td align="center">-</td>
+<td align="center"><img src="sixel13.gif" width="12"
+height="18"></td>
+<td align="center">=</td>
+<td align="center"><img src="sixel29.gif" width="12"
+height="18"></td>
+<td align="center">M</td>
+<td align="center"><img src="rarr.gif" width="12"
+height="18"></td>
+<td align="center">m</td>
+<td align="center"><img src="sixel45.gif" width="12"
+height="18"></td>
+<td align="center">¾</td>
+<td align="center"><img src="sixel61.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>1110</td>
+<td align="right">14</td>
+<td><u>S0</u></td>
+<td>Hold Graphics </td>
+<td align="center">.</td>
+<td align="center"><img src="sixel14.gif" width="12"
+height="18"></td>
+<td align="center">&gt;</td>
+<td align="center"><img src="sixel30.gif" width="12"
+height="18"></td>
+<td align="center">N</td>
+<td align="center"><img src="uarr.gif" width="12"
+height="18"></td>
+<td align="center">n</td>
+<td align="center"><img src="sixel46.gif" width="12"
+height="18"></td>
+<td align="center">÷</td>
+<td align="center"><img src="sixel62.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>1111</td>
+<td align="right">15</td>
+<td><u>S1</u></td>
+<td>Release Graphics (2)</td>
+<td align="center">/</td>
+<td align="center"><img src="sixel15.gif" width="12"
+height="18"></td>
+<td align="center">?</td>
+<td align="center"><img src="sixel31.gif" width="12"
+height="18"></td>
+<td align="center">O</td>
+<td align="center">#</td>
+<td align="center">o</td>
+<td align="center"><img src="sixel47.gif" width="12"
+height="18"></td>
+<td align="center">block</td>
+<td align="center"><img src="sixel63.gif" width="12"
+height="18"></td>
+</tr>
+<tr>
+<td>&nbsp;</td>
+<td align="right">Row</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+</table>
+
+<p>Codes may be referred to by their column and row: e.g. 2/5
+refers to %</p>
+
+<p>(1) These control characters are reserved for compatibility
+with other data codes<br>
+(2) These control characters are presumed before each row begins.</p>
+
+<p>Black represents display foreground colour.<br>
+White represents display background colour.</p>
+
+<blockquote>
+<p><font color="#FF00FF"><em>The latest teletext spec allows
+codes 00 and 10 to be Alpha Black and Graphics Black
+respectively,<br>
+though cautions that some older equipment may interpret these
+code differently.</em></font></p>
+</blockquote>
+
+<hr size="1">
+
+<h2><font color="#0000FF">FIGURE A. </font><a
+name="POSSIBLE TELETEXT DATA LINES (SYSTEM M)"><font
+color="#0000FF">POSSIBLE TELETEXT DATA LINES (SYSTEM M)</font></a></h2>
+
+<p><img src="ttx_spec_fig_A.gif" width="946" height="401"></p>
+
+<hr size="1">
+
+<h2><font color="#0000FF">FIGURE B. </font><a
+name="TRANSMISSION AND DISPLAY SEQUENCE USING 30 CHARACTER CODES PER DATA LINE, AND 21 ROWS PER PAGE"><font
+color="#0000FF">TRANSMISSION AND DISPLAY SEQUENCE USING <br>
+30 CHARACTER CODES PER DATA LINE, AND 21 ROWS PER PAGE</font></a></h2>
+
+<p><font size="2"><img src="ttx_spec_table_B.gif" width="691"
+height="565"></font></p>
+
+<p>Numbers are ROW ADDRESSES in transmitted DATA LINE</p>
+
+<hr size="1">
+
+<h1 align="center"><font color="#0000FF">UK Broadcast Teletext
+Specification (September 1976)<br>
+</font><a name="Possible application to 525/60 Systems"><font
+color="#0000FF">Possible application to 525/60 Systems</font></a></h1>
+
+<p>This document describes considerations to be applied when
+adapting the UK specification for use with 525/60 television
+systems with band-widths of 4.0 MHz or greater. Sections of the
+UK specification are referred to and where there is no reference
+to a section, it is considered that it is directly applicable to
+525/60 systems. In some cases a range of values is provided,
+since the final choice can only be made after field tests using
+braodcast transmitters and typical receiving sites, together with
+cable systems. <em>By means of an example</em> attention is
+particularly drawn to a method introduced to permit the
+transmission of a given Row of characters to be divided between
+two Data-Lines.</p>
+
+<h2><font color="#0000FF">SUMMARY</font></h2>
+
+<p>3.<br>
+An appropriate binary signalling rate directly applicable to
+525/60 television systems with video band-widths of 4.0 MHz or
+greater is likely to be between 3.8 and 5.7 Mbit/s. during each
+Data-Line.</p>
+
+<p>4.<br>
+Each Data-Line carries data synchronising and address information
+and the codes for either the first part of a Row of characters or
+the completion of a group of Rows of characters.</p>
+
+<p>5.<br>
+<em>In this example</em>, a Page comprises twenty-one Rows of
+forty characters, including a special top Row called the Page
+Header.</p>
+
+<p>8.<br>
+Using two Data-Lines per field, the system allows between three
+and five full Pages/second to be transmitted, depending upon the
+bit rate.</p>
+
+<h1><font color="#0000FF">Section 1. TELEVISION DATA-LINES</font></h1>
+
+<p>The television signal includes unused lines in the field
+blanking interval (see figure A attached) to allow time for field
+fly-back in receivers before each active field begins. The
+duration of this interval is 19-21 lines, some of which are used
+for test, signalling and other purposes.</p>
+
+<p>This system can use any of these unused lines. A line In the
+field blanking interval is identified as a Teletext Data-Line by
+the presence of the Clock Run-In (see Section 1.2.1) followed by
+the Framing Code (see Section 1.2.2) at an appropriate time.</p>
+
+<h3><font color="#0000FF">1.1.2 Bit Rate</font></h3>
+
+<p>The binary element signalIing rate is recommended to be an
+even multiple of the nominal television line frequency, and is
+likely to be in the range 3.8 to 5.7 Mbits/s. The optimum rate
+should be selected by test signals radiated from normal broadcast
+transmitters and assessing error rates at typical receiving
+sites. Cable systems should also be included.</p>
+
+<h3><font color="#0000FF">1.13 Data Timing</font></h3>
+
+<p>The data timing reference point is the peak of the penultimate
+'1&#146; of the Clock Run-In sequence (see figure 3). This point
+has been selected to reduce the effect of any transient
+distortions at the start of the Data-Line.</p>
+
+<p>The Line time reference is the half amplitude point of the
+leading edge of the line synchronising pulse, The precise value
+of the Data timing reference may differ from 12 us, depending
+upon the selected bit rate.</p>
+
+<p>The Data timing may vary from Data Iine to Data-Line.</p>
+
+<h3><font color="#0000FF">1.1.4 Data Pulse Shape</font></h3>
+
+<p>The spectrum of the generated data pulses which is the product
+of the spectrum of the basic NRZ data wave form and that of a
+phase-corrected shaping filter is indicated in figure 4. To
+minimise inter-symbol interference the spectrum is substantially
+skew-symmetrical about a frequency corresponding to half the bit
+rate. The values on the frequency axis of figure 4 and the time
+axis of figure 5 depend upon the selected bit rate.</p>
+
+<h2><font color="#0000FF">1.2 Data-Line Structure</font></h2>
+
+<p>Values are given <em>by way of example only</em>, for a signal
+with a bit rate of 5.2867 Mbits/s, 336 times.the nominal
+television line frequency. In this case each Data-Line comprises
+280 bits which may be considered as 35 8-bit Bytes.</p>
+
+<p>The first three bytes which have even parity serve to
+synchronise the bit and Byte recovery operation in the receiver.
+The remaining Bytes here odd parity and carry address and control
+information and the Codes for a Character Row (see figure 6).</p>
+
+<p>The use of odd parity during the variable part of the
+Data-Line ensures that there are never more than 14 bit periods
+between the Data level transitions in the wave form. This
+simplifies the recovery of the bit-rate Clock directly from the
+Data waveform.</p>
+
+<p>All the address and Page control information is transmitted
+using Hamming Code Bytes to reduce the possibility of the wrong
+Character Rows being stored in the receiver.</p>
+
+<h1><font color="#0000FF">Section 2. ORGANISATION OF PAGES AND
+ROWS</font></h1>
+
+<p>This section also uses, by way of example only, 280
+bits/Data-Line.</p>
+
+<h3><font color="#0000FF">2.1.3 Magazine and Row Address Group</font></h3>
+
+<p>Every Data-Line contains two Hamming Codes signifying a 3-bit
+Magazine number and a 5-bit Row address (see figure 6).</p>
+
+<p>The Magazine number is in the range 1-8, Magazine 8
+corresponding to the bits 000 and the others being directly the
+number obtained with the bit weights given in figure 6.</p>
+
+<p>The 5-bit Row addresses permit addresses for Rows numbered
+0-31. Those numbered 0 &#150; 20 correspond to the first part of
+the display Rows in descending order, Row 0 being the Header. The
+remaining Row addresses may be used to complete groups of Rows in
+the manner described in Section 2.2.2 and to provide additional
+Rows to facilitate later system developments.</p>
+
+<h3><font color="#0000FF">2.2.2 Rows</font></h3>
+
+<p>A displayed Row will include forty Character Codes. A
+Data-Line using a bit rate selected from the recommended range
+can only include a number of Character Codes less than forty. A
+recommended transmission sequence is shown in figure B, using for
+example only, a bit rate of 5.286/ Mbits/s. In this example there
+are thirty-five Bytes/Data-Line, 30 of these may be used for
+Character Codes. The Row addresses 0-20 apply to the first 30
+Character Codes of each Row. The remaining ten Character Codes of
+each Row may be associated in group of three Rows and
+accommodated in a single Data-Line. It is recommended that these
+Data-Lines be given addressses in descending numerical sequence,
+starting from the highest possible number, 31. In this example
+Row addresses 31-25 would be used to complete the Rows of a Page,
+The remaining unused addresses, 24-21 inclusive, would be
+reserved for future developments.</p>
+
+<p>Data-Lines of a Page may be transmitted in any order.
+Data-Lines including those of the Page-Header may be repeated, in
+which case the latest apparently error-free information should
+take precedence. Data-Lines containing no information for display
+need not be transmitted.</p>
+
+<h1><font color="#0000FF">Section 3. PAGE DISPLAY</font></h1>
+
+<p>The 21 Rows of a Page are numbered sequentially from 0
+(Page-Header, top Row) to 20. The 40 Character Rectangles of a
+Row are directly related to the Character Bytes of the
+corresponding Data-Lines, as indicated<em> in this example</em>,
+in Figure B.</p>
+
+<p>Every Character Byte contains a Character Code which
+represents either a Display character or a Control Character. The
+Control Characters are used to establish Display Modes, which may
+be changed between Character Rectangles within a Row.</p>
+
+<p>The Display Modes determine how a Display Character Code is
+interpreted as a character to be generated in the corresponding
+Character Rectangle of the Page display. The Character Rectangles
+corresponding to Control Character Codes are generally displayed
+as Spaces (but see 3.1.7).</p>
+
+<h1><font color="#0000FF">Section 4. DEFINITION OF TELETEXT TERMS</font></h1>
+
+<p><font color="#0000FF"><strong>Data Line</strong></font> - One
+of the otherwise unused lines in the television field blanking
+interval used to carry information for part of one Teletext
+Character Row. A Data Line is identified by the Clock Run-In
+sequence followed by a Framing Code at the appropriate time on a
+line in the field interval.</p>
+
+<p><font color="#0000FF"><strong>Page</strong></font> - <em>In
+this example, </em>A group of <strong>21</strong> Rows of 40
+characters intended to be displayed as an entity on the
+television screen.</p>
+
+<p><font color="#0000FF"><strong>Row</strong></font> - <em>In
+this example, </em>A Page comprises <strong>21</strong> Rows of
+characters. When displayed on a television screen each Row
+occupies about 20 television display lines. It is to avoid
+confusion with television 'lines&#146; that the Teletext Pages
+are said to contain 'Rows'.</p>
+
+<p><font color="#0000FF"><strong>Row-Adaptive Transmission</strong></font>
+- Teletext transmission in which Data-Lines containing no
+information are not transmitted. This reduces the access times of
+the system. The non-transmitted Data-Lines are assumed to contain
+the Space Character 2/0 (but see 3.1.6).</p>
+
+<p align="right">Published jointly by the <br>
+British Broadcasting Corporation<br>
+Independent Broadcasting Authority<br>
+British Radio Equipment Manufacturer's Association</p>
+</body>
+</html>

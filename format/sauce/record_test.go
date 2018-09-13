@@ -15,6 +15,7 @@ var tests = []struct {
 	{"testdata/test.ans", Record{
 		Title:    "Hello",
 		Author:   "maze",
+		Group:    "textmod.es",
 		Info:     "IBM VGA",
 		DataType: Character,
 		FileType: ANSi,
@@ -22,6 +23,7 @@ var tests = []struct {
 	{"testdata/test.bin", Record{
 		Title:    "Hello",
 		Author:   "maze",
+		Group:    "textmod.es",
 		Info:     "IBM VGA",
 		DataType: BinaryText,
 		FileType: 0x28,
@@ -29,6 +31,7 @@ var tests = []struct {
 	{"testdata/test.xb", Record{
 		Title:    "Hello",
 		Author:   "maze",
+		Group:    "textmod.es",
 		DataType: XBIN,
 	}},
 }
