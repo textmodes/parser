@@ -1,0 +1,108 @@
+.TH PS 1 "September 14, 2018" "textmodes/parser" "Commands"
+.\" Ragged-right text.
+.na
+.\" Disable hyphenation.
+.nh
+.SH NAME
+piece \- render art to image, animation or video
+.SH SYNOPSIS
+\fBpiece\fR [\fIoptions\fR] <\fIinput\fR>
+.PP
+.PP
+.SH DESCRIPTION
+.B piece
+renders art scene files to image, animation or video.
+.SH OPTIONS
+.TP
+.B \-\^f \fRor\fP \-\^f=\fR<\fItrue\fR|\fIfalse\fR>
+Force overwriting output file.
+.TP
+.B \-\^o  \fIfilename\fR
+Set the output file name. The default is to append the appropriate file
+extension to the input file name.
+.TP
+.B \-\^q \fRor\fP \-\^q=\fR<\fItrue\fR|\fIfalse\fR>
+Be quiet. Suppresses the output of informational messages.
+.SH "RENDER OPTIONS"
+.TP
+.B \-\^animate  \fIduration\fR
+Create an animated GIF with a frame delay of
+.BR duration .
+For the format options, see
+.BR DURATION .
+.TP
+.B \-\^scroll \fIduration\fR
+Create an scrolling GIF with a frame delay of
+.BR duration .
+For the format options, see
+.BR DURATION .
+.TP
+.B \-\^video \fRor\fP \-\^video=\fR<\fItrue\fR|\fIfalse\fR>
+In stead of creating an animated gif, use
+.BR ffmpeg
+to create a MP4 video.
+.SH "ANSI SPECIFIC OPTIONS"
+.TP
+.B \-\^blink \fRor\fP \-\^blink=\fR<\fItrue\fR|\fIfalse\fR>
+Option to enable/disable the rendition of blinking characters in the resulting
+image.
+.TP
+.B \-\^font \fIname\fR
+Specify the font name, this overrides whatever is in the SAUCE information. To
+get a list of possible font name values, use
+.B \-\^font \fBlist\fR.
+.SH DURATION
+Supported units for \fIduration\fR are \fBns\fR, \fBus\fR, \fBms\fR, \fBs\fR,
+\fBm\fR, \fBh\fR. For example, to specify a delay of 400 milliseconds, one
+would pass \fB400ms\fR as an argument.
+.SH FONTS
+Supported fonts are:
+.TS
+l                       l.
+\fBNAME                    ALIASES\fR
+Amiga MicroKnight       microknight
+Amiga MicroKnight+      microknight+
+Amiga P0T-NOoDLE        potnoodle
+Amiga Topaz 1           amiga, topaz, topaz1
+Amiga Topaz 1+          topaz1+
+Amiga Topaz 2           topaz2
+Amiga Topaz 2+          topaz2+
+Amiga mOsOul            mosoul
+Atari ATASCII           atari, atascii
+IBM EGA                 ega
+IBM EGA43               ega43
+IBM VGA                 8x16, vga
+IBM VGA 1251
+IBM VGA 437             cp437, dos
+IBM VGA 737             cp737
+IBM VGA 775             cp775
+IBM VGA 850             cp850
+IBM VGA 852             cp852
+IBM VGA 855             cp855
+IBM VGA 857             cp857
+IBM VGA 860             cp860
+IBM VGA 861             cp861
+IBM VGA 862             cp862
+IBM VGA 863             cp863
+IBM VGA 865             cp865
+IBM VGA 866             cp866
+IBM VGA 866b
+IBM VGA 866c
+IBM VGA 866u
+IBM VGA 869             cp869
+IBM VGA50               8x8, vga50
+IBM VGA50 1251
+IBM VGA50 437
+IBM VGA50 850
+IBM VGA50 865
+IBM VGA50 866
+.TE
+.SH AUTHOR
+Wijnand Modderman-Lenstra is the original author of
+.BR "piece" .
+
+It was inspired by
+.BR "ansilove"
+authored by Fredrick Cambus.
+.SH "SEE ALSO"
+ansilove, convert(1), ffmpeg(1)
